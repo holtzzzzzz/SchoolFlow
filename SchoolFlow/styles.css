@@ -55,7 +55,7 @@ nav.sidebar {
 .nav-links a {
   color: #333;
   text-decoration: none;
-  padding: 12px 16px;
+  padding: 12px 12px;
   border-radius: 6px;
   font-size: 1rem;
   display: flex;
@@ -72,7 +72,7 @@ nav.sidebar {
 .nav-links a:hover {
   background-color: #555;
   color: #fff;
-  transform: translateX(5px) scale(1.05);
+  transform: translateX(1%) scale(1.05);
 }
 
 .main-content {
@@ -111,7 +111,7 @@ nav.sidebar {
   .sidebar-header {
     flex-direction: row;
     align-items: center;
-    padding: 0 8px;
+    padding: 0;
   }
   
   .sidebar-header h2 {
@@ -122,7 +122,7 @@ nav.sidebar {
     flex-direction: row;
     gap: 0;
     width: auto;
-    padding: 0;
+    padding: 4%;
   }
   
   .nav-links a {
