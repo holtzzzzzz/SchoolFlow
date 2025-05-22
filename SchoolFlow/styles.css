@@ -61,6 +61,7 @@ nav.sidebar {
   display: flex;
   align-items: center;
   transition: background 0.2s, color 0.2s, transform 0.2s;
+  font-weight: bold;
 }
 
 .nav-links a img {
@@ -82,12 +83,6 @@ nav.sidebar {
   margin-right: auto;
 }
 
-.main-content h1 {
-  font-size: 2rem;
-  margin-bottom: 20px;
-  color: #333;
-  margin-top: 9%;
-}
 .main-content p {
   font-size: 1.4rem;
   color: #333;
@@ -101,6 +96,7 @@ nav.sidebar {
   text-align: center;
   height: 30vh;
   width: 40vw;
+  justify-content: center;
 }
 
 
