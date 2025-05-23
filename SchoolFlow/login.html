@@ -6,15 +6,22 @@
     <link rel="stylesheet" href="styles.css">
     <title>Log in</title>
   </head>    
-  <body>
+  <body style="justify-content: center; display: flex; align-items: center; ">
     <div class="login-container">
-      <h1>Log in</h1>
+      <img src="imgs/logo.png">
       <form action="index.html">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required>
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required>
-        <button type="submit">Log in</button>
+        <form action="index.html">
+          <select id="userType" name="userType" required>
+            <option value="" disabled selected>Selecione</option>
+            <option value="aluno">Aluno</option>
+            <option value="funcionario">Funcionário</option>
+            <option value="professor">Professor</option>
+          </select>
+
+        <input placeholder="Email" type="text" id="username" name="username" required>
+        <input placeholder="Senha" type="password" id="password" name="password" required>
+        <br>
+        <button class="login-button" type="submit">Confirmar</button>
       </form>
     </div>
   </body>
