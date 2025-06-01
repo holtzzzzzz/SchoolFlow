@@ -1,0 +1,240 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  transition: all 0.3s ease;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #CBE0E9;
+  min-height: 100vh;
+}
+
+nav.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 220px;
+  height: 100vh;
+  background: #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 24px 0 0 0;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+  z-index: 100;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0 24px 24px 24px;
+}
+
+.sidebar-header img {
+  height: 28px;
+  width: 28px;
+  margin-right: 10px;
+}
+
+.sidebar-header h2 {
+  font-size: 1.3rem;
+  color: #333;
+}
+
+.nav-links {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 4px;
+  padding: 0 12px;
+}
+
+.nav-links a {
+  color: #333;
+  text-decoration: none;
+  padding: 12px 12px;
+  border-radius: 6px;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+  font-weight: bold;
+}
+
+.nav-links a img {
+  height: 20px;
+  width: 20px;
+  margin-right: 10px;
+}
+
+.nav-links a:hover {
+  background-color: #555;
+  color: #fff;
+  transform: translateX(1%) scale(1.05);
+}
+
+.main-content {
+  margin-left: 220px;
+  padding: 40px 32px;
+  max-width: 900px;
+  margin-right: auto;
+}
+
+.main-content p {
+  font-size: 1.4rem;
+  color: #333;
+}
+.main-content div{
+  background-color: #F0F0F0;
+  display: flex;
+  flex-direction: column;
+  padding:6%;
+  border-radius: 10px;
+  text-align: center;
+  height: 30vh;
+  width: 40vw;
+  justify-content: center;
+}
+.login-container{
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  justify-content: center;
+  height: 50vh;
+  background-color: #ffffff;
+  width: 30%;
+  border-radius: 10px;
+  align-items: center;
+  min-width: 200px;
+  min-height: 350px;
+  max-width: 300px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.login-container img{
+  height: 50%;
+  width: 90%;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  min-width: 180px;
+  min-height: 100px;
+  max-height: 150px;
+  max-width: 230px;
+
+}
+.login-container form  {
+  margin-top: 10px;
+}
+.login-container input{
+  margin-top: 5px;
+  margin-bottom: 5px;
+  border-radius: 50px;
+  height: 4vh;
+  width: 90%;
+  padding: 4px;
+  border:none;
+  background-color: #d9d9d9;
+  color: black;
+  min-height: 30px;
+  padding-left: 14px;
+}
+
+
+.login-button{
+  background-color: #1b3cc0;
+  color: #fff;
+  transform: translateX(1%) scale(1.05);
+  border-radius: 10px;
+  padding: 10px;
+  margin-top: 10px;
+  border: none;
+  cursor: pointer;
+}
+.login-container select {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  border-radius: 50px;
+  height: 4vh;
+  width: 90%;
+  padding: 4px;
+  border: none;
+  background-color: #d9d9d9;
+  color: #787878;
+  min-height: 30px;
+  padding-left: 11px;
+}
+
+@media (max-width: 900px) {
+  .main-content {
+    padding: 32px 8px;
+  }
+}
+
+@media (max-width: 700px) {
+  nav.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 60px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+  .main-content div{
+    background-color: #F0F0F0;
+    display: flex;
+    flex-direction: column;
+    padding:6%;
+    border-radius: 10px;
+    text-align: center;
+    height: 30vh;
+    width: 100%;
+  }
+  .sidebar-header {
+    flex-direction: row;
+    align-items: center;
+    padding: 0;
+  }
+
+  .sidebar-header h2 {
+    font-size: 1.1rem;
+  }
+
+  .nav-links {
+    flex-direction: row;
+    gap: 0;
+    width: auto;
+    padding: 4%;
+  }
+
+  .nav-links a {
+    padding: 8px 8px;
+    font-size: 0;
+  }
+
+  .main-content {
+    margin-left: 0;
+    margin-top: 70px;
+  }
+}
+
+@media (max-width: 500px) {
+  .main-content {
+    margin-top: 80px;
+    padding: 16px 2vw;
+  }
+
+  nav.sidebar {
+    height: 70px;
+  }
+
+  .nav-links a img {
+    margin-right: 5px;
+  }
+}
