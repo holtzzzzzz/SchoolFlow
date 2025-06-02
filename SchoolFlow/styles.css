@@ -103,7 +103,7 @@ nav.sidebar {
   flex-direction: column;
   text-align: center;
   justify-content: center;
-  height: 50vh;
+  height: 70vh;
   background-color: #ffffff;
   width: 30%;
   border-radius: 10px;
@@ -128,12 +128,12 @@ nav.sidebar {
 .login-container form  {
   margin-top: 10px;
 }
-.login-container input{
+.login-container input {
   margin-top: 5px;
   margin-bottom: 5px;
   border-radius: 50px;
-  height: 4vh;
-  width: 90%;
+  height: 5vh;
+  width: 100%;
   padding: 4px;
   border:none;
   background-color: #d9d9d9;
@@ -141,7 +141,19 @@ nav.sidebar {
   min-height: 30px;
   padding-left: 14px;
 }
-
+.login-container select {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  border-radius: 50px;
+  height: 5vh;
+  width: 100%;
+  padding: 4px;
+  border:none;
+  background-color: #d9d9d9;
+  color: black;
+  min-height: 30px;
+  padding-left: 14px;
+}
 
 .login-button{
   background-color: #1b3cc0;
@@ -153,7 +165,7 @@ nav.sidebar {
   border: none;
   cursor: pointer;
 }
-.login-container select {
+.login-container select option{
   margin-top: 5px;
   margin-bottom: 5px;
   border-radius: 50px;
@@ -165,6 +177,9 @@ nav.sidebar {
   color: #787878;
   min-height: 30px;
   padding-left: 11px;
+}
+.login-container select{
+  color: #787878;
 }
 
 @media (max-width: 900px) {
