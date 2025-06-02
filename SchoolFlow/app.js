@@ -24,9 +24,18 @@ app.use(express.static(__dirname));
 
 app.get('/', (req, res) => {
   if (req.session.userId) {
-    res.send(`<h1>Bem-vindo, ${req.session.username}!</h1><a href="/logout">Sair</a>`);
+    const funcao = req.session.funcao;
+    if (funcao === 'responsavel') {
+      return res.redirect('/index.html');
+    } else if (funcao === 'professor') {
+      return res.redirect('/indexProfessor.html');
+    } else if (funcao === 'secretaria') {
+      return res.redirect('/indexSecretaria.html');
+    } else {
+      res.send(`<h1>Bem-vindo, ${req.session.username}!</h1><a href="/logout">Sair</a>`);
+    }
   } else {
-    res.redirect('/login');
+    res.redirect('/login.html');
   }
 });
 
@@ -43,7 +52,9 @@ app.post('/login', async (req, res) => {
       if (validPassword) {
         req.session.userId = user.rows[0].id;
         req.session.username = user.rows[0].username;
-        return res.redirect('/');
+        req.session.funcao = user.rows[0].funcao;
+
+        return res.status(200).json({ message: 'Login bem-sucedido', funcao: user.rows[0].funcao });
       }
     }
     return res.status(401).json({ message: 'Usuário ou senha inválidos' });
