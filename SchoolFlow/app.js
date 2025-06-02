@@ -58,14 +58,17 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/register', async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, nome_completo, data_nascimento, funcao } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    await pool.query('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hashedPassword]);
-    res.redirect('/login');
+    await pool.query(
+      'INSERT INTO users (username, password, nome_completo, data_nascimento, funcao) VALUES ($1, $2, $3, $4, $5)',
+      [username, hashedPassword, nome_completo, data_nascimento, funcao]
+    );
+    res.status(200).json({ message: 'Usuário registrado com sucesso!' }); 
   } catch (err) {
     console.error(err);
-    res.send('Erro ao registrar usuário. Talvez o nome já exista. <a href="/register">Tente novamente</a>');
+    return res.status(500).json({ message: 'Erro ao registrar usuário. Tente novamente.' });
   }
 });
 
