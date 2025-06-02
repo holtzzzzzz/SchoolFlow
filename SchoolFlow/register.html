@@ -7,15 +7,70 @@
     <title>Registrar</title>
 </head>
 <body style="justify-content: center; display: flex; align-items: center;">
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <img src="imgs/menu.png" alt="Menu">
+      </div>
+      <div class="nav-links">
+        <a href="indexSecretaria.html"><img src="imgs/home.png" alt="Home">Início</a>
+        <a href="register.html"><img src="imgs/registro.png" alt="Register">Registrar</a>
+        <a href="#"><img src="imgs/turma.png" alt="Class">Desempenho da Turma</a>
+        <a href="#"><img src="imgs/paperplane.png" alt="Message">Mensagens</a>
+        <a href="#"><img src="imgs/bell.png" alt="Bell">Avisos</a>
+        <a href="#"><img src="imgs/calendar.png" alt="Calendar">Calendário</a>
+        <a href="#"><img src="imgs/grades.png" alt="Grades">Notas</a>
+      </div>
+    </nav>
     <div class="login-container">
         <img src="imgs/logo.png" alt="Logo" />
         <form id="registerForm" action="/register" method="POST">
-            <input type="email" id="email" name="username" placeholder="Email" required />
-            <input type="password" id="senha" name="password" placeholder="Senha" required />
-            <br />
+            <input type="text" name="nome_completo" placeholder="Nome Completo" required /><br />
+            <input type="date" name="data_nascimento" placeholder="Data de Nascimento" required /><br />
+            <input type="email" id="email" name="username" placeholder="Email" required /><br />
+            <input type="password" id="senha" name="password" placeholder="Senha" required /><br />
+
+            <select name="funcao" required>
+                <option value="">Selecione a função</option>
+                <option value="responsavel">Responsável</option>
+                <option value="secretaria">Secretaria</option>
+                <option value="professor">Professor</option>
+            </select><br />
+
             <button class="login-button" type="submit">Registrar</button>
         </form>
-        <p>Já tem conta? <a href="/login">Faça login</a></p>
     </div>
+
+    <script>
+        const registerForm = document.getElementById('registerForm');
+
+        registerForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(registerForm);
+            const data = Object.fromEntries(formData);
+
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(data).toString(),
+                });
+
+                const responseData = await response.json(); 
+
+                if (response.ok) {
+                    alert(responseData.message); 
+                    window.location.href = '/register'; 
+                } else {
+                    alert(responseData.message); 
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao conectar com o servidor');
+            }
+        });
+    </script>
 </body>
 </html>
