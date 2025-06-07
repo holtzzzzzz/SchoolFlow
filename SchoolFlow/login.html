@@ -12,7 +12,7 @@
         <form id="loginForm" action="/login" method="POST">
             <input type="email" id="email" name="username" placeholder="Email" required />
             <input type="password" id="senha" name="password" placeholder="Senha" required />
-            <br />
+            <br/>
             <button class="login-button" type="submit">Entrar</button>
         </form>
         </div>
@@ -39,14 +39,19 @@
                     const responseData = await response.json();
                     const funcao = responseData.funcao;
 
-                    if (funcao === 'responsavel') {
-                        window.location.href = '/index.html';
-                    } else if (funcao === 'professor') {
-                        window.location.href = '/indexProfessor.html';
-                    } else if (funcao === 'secretaria') {
-                        window.location.href = '/indexSecretaria.html';
-                    } else {
-                        window.location.href = '/index.html'; 
+                    switch (funcao) {
+                        case 'responsavel':
+                            window.location.href = '/index.html';
+                            break;
+                        case 'professor':
+                            window.location.href = '/indexProfessor.html';
+                            break;
+                        case 'secretaria':
+                            window.location.href = '/indexSecretaria.html';
+                            break;
+                        default:
+                            window.location.href = '/index.html';
+                            break;
                     }
                 } else {
                     const errorData = await response.json();
