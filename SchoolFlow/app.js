@@ -31,8 +31,10 @@ app.get('/', (req, res) => {
       return res.redirect('/indexProfessor.html');
     } else if (funcao === 'secretaria') {
       return res.redirect('/indexSecretaria.html');
+    } else if (funcao === 'aluno') {
+      return res.redirect('/indexAluno.html');
     } else {
-      res.send(`<h1>Bem-vindo, ${req.session.username}!</h1><a href="/logout">Sair</a>`);
+      res.send(`<h1>Bem-vindo, ${req.session.email}!</h1><a href="/logout">Sair</a>`);
     }
   } else {
     res.redirect('/login.html');
@@ -44,14 +46,14 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
   try {
-    const user = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+    const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (user.rows.length > 0) {
       const validPassword = await bcrypt.compare(password, user.rows[0].password);
       if (validPassword) {
         req.session.userId = user.rows[0].id;
-        req.session.username = user.rows[0].username;
+        req.session.email = user.rows[0].email;
         req.session.funcao = user.rows[0].funcao;
 
         return res.status(200).json({ message: 'Login bem-sucedido', funcao: user.rows[0].funcao });
@@ -69,14 +71,15 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/register', async (req, res) => {
-  const { username, password, nome_completo, data_nascimento, funcao } = req.body;
+  const { email, password, nome_completo, data_nascimento, funcao, telefone, id_turma } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     await pool.query(
-      'INSERT INTO users (username, password, nome_completo, data_nascimento, funcao) VALUES ($1, $2, $3, $4, $5)',
-      [username, hashedPassword, nome_completo, data_nascimento, funcao]
+      `INSERT INTO users (email, password, nome_completo, data_nascimento, funcao, telefone, id_turma)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [email, hashedPassword, nome_completo, data_nascimento, funcao, telefone || null, id_turma || null]
     );
-    res.status(200).json({ message: 'Usuário registrado com sucesso!' }); 
+    res.status(200).json({ message: 'Usuário registrado com sucesso!' });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: 'Erro ao registrar usuário. Tente novamente.' });
