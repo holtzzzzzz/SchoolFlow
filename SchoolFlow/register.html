@@ -26,14 +26,22 @@
         <form id="registerForm" action="/register" method="POST">
             <input type="text" name="nome_completo" placeholder="Nome Completo" required /><br />
             <input type="date" name="data_nascimento" placeholder="Data de Nascimento" required /><br />
-            <input type="email" id="email" name="username" placeholder="Email" required /><br />
+            <input type="email" id="email" name="email" placeholder="Email" required /><br />
             <input type="password" id="senha" name="password" placeholder="Senha" required /><br />
+            <input type="text" name="telefone" placeholder="Telefone" /><br />
+
+            <select name="id_turma">
+                <option value="">Selecione a Turma </option>
+                <option value="1">1ºano</option>
+                <option value="2">2ºano</option>
+            </select><br />
 
             <select name="funcao" required>
                 <option value="">Selecione a função</option>
                 <option value="responsavel">Responsável</option>
                 <option value="secretaria">Secretaria</option>
                 <option value="professor">Professor</option>
+                <option value="aluno">Aluno</option>
             </select><br />
 
             <button class="login-button" type="submit">Registrar</button>
