@@ -1,56 +1,85 @@
-CREATE TABLE turma (
-    id SERIAL PRIMARY KEY,
-    nome VARCHAR(50) NOT NULL,
-    ano_letivo INT NOT NULL CHECK (ano_letivo >= 2000), -- ano válido
-    id_user INT,  -- professor responsável
-    CONSTRAINT fk_turma_professor FOREIGN KEY (id_user) REFERENCES users(id) ON DELETE SET NULL
+-- Tabela: Turmas
+CREATE TABLE Turmas (
+    id_turma SERIAL PRIMARY KEY,
+    ano INTEGER NOT NULL,
+    serie VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    funcao VARCHAR(20) NOT NULL CHECK (funcao IN ('aluno', 'professor', 'secretaria', 'responsavel')),
-    nome_completo VARCHAR(100) NOT NULL,
-    email VARCHAR(150) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    telefone VARCHAR(20),
-    data_nascimento DATE,
-    id_turma INT,
-    CONSTRAINT fk_users_turma FOREIGN KEY (id_turma) REFERENCES turma(id) ON DELETE SET NULL
-);
-
-
-CREATE INDEX idx_users_email ON users(email);
-
-CREATE TABLE responsavel (
-    id SERIAL PRIMARY KEY,
+-- Tabela: Disciplinas
+CREATE TABLE Disciplinas (
+    id_disciplina SERIAL PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
-    telefone VARCHAR(20),
-    email VARCHAR(150) UNIQUE
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE aluno_responsavel (
-    id_aluno INT NOT NULL,
-    id_responsavel INT NOT NULL,
-    PRIMARY KEY (id_aluno, id_responsavel),
-    CONSTRAINT fk_aluno_responsavel_aluno FOREIGN KEY (id_aluno) REFERENCES users(id) ON DELETE CASCADE,
-    CONSTRAINT fk_aluno_responsavel_responsavel FOREIGN KEY (id_responsavel) REFERENCES responsavel(id) ON DELETE CASCADE
+-- Tabela: Professores
+CREATE TABLE Professores (
+    id_professor SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    senha VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE avaliacao (
+-- Tabela: Professores_Disciplinas_Turmas
+CREATE TABLE Professores_Disciplinas_Turmas (
     id SERIAL PRIMARY KEY,
-    descricao VARCHAR(100) NOT NULL,
-    data DATE NOT NULL CHECK (data <= CURRENT_DATE),
-    id_turma INT NOT NULL,
-    peso DECIMAL(3,2) DEFAULT 1.0 CHECK (peso > 0),
-    CONSTRAINT fk_avaliacao_turma FOREIGN KEY (id_turma) REFERENCES turma(id) ON DELETE CASCADE
+    id_professor INTEGER NOT NULL REFERENCES Professores(id_professor) ON DELETE CASCADE,
+    id_disciplina INTEGER NOT NULL REFERENCES Disciplinas(id_disciplina) ON DELETE CASCADE,
+    id_turma INTEGER NOT NULL REFERENCES Turmas(id_turma) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE boletim (
+-- Tabela: Alunos
+CREATE TABLE Alunos (
+    id_aluno SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    senha VARCHAR(255) NOT NULL,
+    id_turma INTEGER NOT NULL REFERENCES Turmas(id_turma) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabela: Notas
+CREATE TABLE Notas (
     id SERIAL PRIMARY KEY,
-    id_aluno INT NOT NULL,
-    id_avaliacao INT NOT NULL,
-    nota DECIMAL(5,2) CHECK (nota >= 0 AND nota <= 10),
-    CONSTRAINT fk_boletim_aluno FOREIGN KEY (id_aluno) REFERENCES users(id) ON DELETE CASCADE,
-    CONSTRAINT fk_boletim_avaliacao FOREIGN KEY (id_avaliacao) REFERENCES avaliacao(id) ON DELETE CASCADE,
-    UNIQUE (id_aluno, id_avaliacao) -- evita duplicidade de notas para mesma avaliação
+    id_aluno INTEGER NOT NULL REFERENCES Alunos(id_aluno) ON DELETE CASCADE,
+    id_disciplina INTEGER NOT NULL REFERENCES Disciplinas(id_disciplina) ON DELETE CASCADE,
+    i1 NUMERIC(5,2),
+    i2 NUMERIC(5,2),
+    epa NUMERIC(5,2),
+    n1 NUMERIC(5,2),
+    n2 NUMERIC(5,2),
+    n3 NUMERIC(5,2),
+    rec NUMERIC(5,2),
+    faltas INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabela: Responsaveis
+CREATE TABLE Responsaveis (
+    id_responsavel SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    senha VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabela: Alunos_Responsaveis
+CREATE TABLE Alunos_Responsaveis (
+    id SERIAL PRIMARY KEY,
+    id_aluno INTEGER NOT NULL REFERENCES Alunos(id_aluno) ON DELETE CASCADE,
+    id_responsavel INTEGER NOT NULL REFERENCES Responsaveis(id_responsavel) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabela: Coordenacao
+CREATE TABLE Coordenacao (
+    id_coordenacao SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    senha VARCHAR(255) NOT NULL,
+    codigo VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
