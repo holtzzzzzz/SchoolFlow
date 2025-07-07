@@ -98,73 +98,72 @@ nav.sidebar {
   width: 40vw;
   justify-content: center;
 }
-.login-container{
+
+.login-container {
   display: flex;
   flex-direction: column;
   text-align: center;
   justify-content: center;
-  height: 70vh;
-  background-color: #ffffff;
+  height: auto;
+  min-height: 350px;
+  background-color: #ffff;
   width: 30%;
   border-radius: 10px;
   align-items: center;
-  min-width: 200px;
-  min-height: 350px;
-  max-width: 300px;
-  padding-left: 10px;
-  padding-right: 10px;
+  min-width: 280px;
+  max-width: 400px;
+  padding: 20px 15px;
+  box-sizing: border-box;
+  margin: 40px auto;
 }
-.login-container img{
-  height: 50%;
-  width: 90%;
+
+.login-container img {
+  height: auto;
+  width: 80%;
   border-radius: 10px;
-  margin-bottom: 10px;
-  min-width: 180px;
-  min-height: 100px;
-  max-height: 150px;
-  max-width: 230px;
-
+  margin-bottom: 15px;
+  min-width: 120px;
+  min-height: 80px;
+  max-height: 120px;
+  max-width: 200px;
 }
-.login-container form  {
+
+.login-container form {
   margin-top: 10px;
-}
-.login-container input {
-  margin-top: 5px;
-  margin-bottom: 5px;
-  border-radius: 50px;
-  height: 5vh;
   width: 100%;
-  padding: 4px;
-  border:none;
-  background-color: #d9d9d9;
-  color: black;
-  min-height: 30px;
-  padding-left: 14px;
-}
-.login-container select {
-  margin-top: 5px;
-  margin-bottom: 5px;
-  border-radius: 50px;
-  height: 5vh;
-  width: 100%;
-  padding: 4px;
-  border:none;
-  background-color: #d9d9d9;
-  color: black;
-  min-height: 30px;
-  padding-left: 14px;
 }
 
-.login-button{
+.login-container input,
+.login-container select {
+  margin-top: 8px;
+  margin-bottom: 8px;
+  border-radius: 50px;
+  height: 5vh;
+  width: 100%;
+  padding: 4px 14px;
+  border: none;
+  background-color: #d9d9d9;
+  color: black;
+  min-height: 40px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.login-button {
   background-color: #1b3cc0;
   color: #fff;
-  transform: translateX(1%) scale(1.05);
   border-radius: 10px;
-  padding: 10px;
-  margin-top: 10px;
+  padding: 12px;
+  margin-top: 15px;
   border: none;
   cursor: pointer;
+  width: 100%;
+  font-size: 1.05rem;
+  transform: none;
 }
+
+
+
 .login-container select option{
   margin-top: 5px;
   margin-bottom: 5px;
@@ -182,6 +181,22 @@ nav.sidebar {
   color: #787878;
 }
 
+table{
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 10px;
+}
+td, th {
+  border: 1px solid #000000;
+  text-align: center;
+  padding: 8px;
+}
+tr:nth-child(even) {
+  background-color: #ffffff;
+}
+tr:nth-child(odd) {
+  background-color: #dfdfdf;
+}
 @media (max-width: 900px) {
   .main-content {
     padding: 32px 8px;
@@ -237,6 +252,22 @@ nav.sidebar {
     margin-left: 0;
     margin-top: 70px;
   }
+
+  .login-container {
+    width: 90vw;
+    max-width: 90vw;
+    min-width: 0;
+    padding: 15px 10px;
+    margin: 20px auto;
+  }
+  
+  .login-container img {
+    width: 70%;
+    max-width: 150px;
+    max-height: 100px;
+    min-width: 100px;
+    min-height: 60px;
+  }
 }
 
 @media (max-width: 500px) {
@@ -251,5 +282,30 @@ nav.sidebar {
 
   .nav-links a img {
     margin-right: 5px;
+  }
+
+  .login-container {
+    width: 95vw;
+    max-width: 95vw;
+    padding: 12px 8px;
+    margin: 15px auto;
+  }
+  
+  .login-container input,
+  .login-container select {
+    min-height: 36px;
+    font-size: 0.95rem;
+    padding: 4px 12px;
+  }
+  
+  .login-container img {
+    width: 60%;
+    max-width: 120px;
+    max-height: 80px;
+  }
+  
+  .login-button {
+    padding: 10px;
+    font-size: 1rem;
   }
 }
