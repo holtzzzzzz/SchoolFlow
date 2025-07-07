@@ -4,53 +4,96 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="styles.css" />
-    <title>Registrar</title>
+    <title>Registrar Usuário</title>
 </head>
 <body style="justify-content: center; display: flex; align-items: center;">
     <nav class="sidebar">
-      <div class="sidebar-header">
-        <img src="imgs/menu.png" alt="Menu">
-      </div>
-      <div class="nav-links">
-        <a href="indexSecretaria.html"><img src="imgs/home.png" alt="Home">Início</a>
-        <a href="register.html"><img src="imgs/registro.png" alt="Register">Registrar</a>
-        <a href="#"><img src="imgs/turma.png" alt="Class">Desempenho da Turma</a>
-        <a href="#"><img src="imgs/paperplane.png" alt="Message">Mensagens</a>
-        <a href="#"><img src="imgs/bell.png" alt="Bell">Avisos</a>
-        <a href="#"><img src="imgs/calendar.png" alt="Calendar">Calendário</a>
-        <a href="#"><img src="imgs/grades.png" alt="Grades">Notas</a>
-      </div>
+        <div class="sidebar-header">
+            <img src="imgs/menu.png" alt="Menu">
+        </div>
+        <div class="nav-links">
+            <a href="indexSecretaria.html"><img src="imgs/home.png" alt="Home">Início</a>
+            <a href="register.html"><img src="imgs/registro.png" alt="Register">Registrar Alunos</a>
+            <a href="#"><img src="imgs/turma.png" alt="Class">Desempenho da Turma</a>
+            <a href="#"><img src="imgs/paperplane.png" alt="Message">Mensagens</a>
+            <a href="#"><img src="imgs/bell.png" alt="Bell">Avisos</a>
+            <a href="#"><img src="imgs/calendar.png" alt="Calendar">Calendário</a>
+            <a href="#"><img src="imgs/grades.png" alt="Grades">Notas</a>
+        </div>
     </nav>
+    
     <div class="login-container">
         <img src="imgs/logo.png" alt="Logo" />
         <form id="registerForm" action="/register" method="POST">
-            <input type="text" name="nome_completo" placeholder="Nome Completo" required /><br />
-            <input type="date" name="data_nascimento" placeholder="Data de Nascimento" required /><br />
-            <input type="email" id="email" name="email" placeholder="Email" required /><br />
-            <input type="password" id="senha" name="password" placeholder="Senha" required /><br />
-            <input type="text" name="telefone" placeholder="Telefone" /><br />
+            <input type="text" name="nome" placeholder="Nome Completo" required /><br />
+            <input type="email" name="email" placeholder="Email" required /><br />
+            <input type="password" name="password" placeholder="Senha" required /><br />
 
-            <select name="id_turma">
-                <option value="">Selecione a Turma </option>
-                <option value="1">1ºano</option>
-                <option value="2">2ºano</option>
-            </select><br />
-
-            <select name="funcao" required>
+            <select name="funcao" id="funcao" required>
                 <option value="">Selecione a função</option>
-                <option value="responsavel">Responsável</option>
-                <option value="secretaria">Secretaria</option>
-                <option value="professor">Professor</option>
                 <option value="aluno">Aluno</option>
+                <option value="professor">Professor</option>
+                <option value="responsavel">Responsável</option>
+                <option value="coordenacao">Coordenação</option>
             </select><br />
+
+            <select name="id_turma" id="id_turma" style="display:none;">
+                <option value="">Selecione a Turma</option>
+            </select><br />
+
+            <input type="text" name="codigo" id="codigo" placeholder="Código (apenas para Coordenação)" style="display:none;" /><br />
 
             <button class="login-button" type="submit">Registrar</button>
         </form>
     </div>
 
     <script>
-        const registerForm = document.getElementById('registerForm');
+        const funcaoSelect = document.getElementById('funcao');
+        const turmaSelect = document.getElementById('id_turma');
+        const codigoInput = document.getElementById('codigo');
 
+        // Carregar turmas do servidor
+        async function carregarTurmas() {
+            try {
+                const response = await fetch('/api/turmas');
+                const turmas = await response.json();
+                
+                turmaSelect.innerHTML = '<option value="">Selecione a Turma</option>';
+                turmas.forEach(turma => {
+                    const option = document.createElement('option');
+                    option.value = turma.id_turma;
+                    option.textContent = `${turma.ano}º ${turma.serie}`;
+                    turmaSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar turmas:', error);
+            }
+        }
+
+        // Carregar turmas quando a página carregar
+        carregarTurmas();
+
+        funcaoSelect.addEventListener('change', function() {
+            // Esconder todos os campos condicionais
+            turmaSelect.style.display = 'none';
+            codigoInput.style.display = 'none';
+            
+            // Limpar valores
+            turmaSelect.value = '';
+            codigoInput.value = '';
+            
+            // Mostrar campos específicos baseado na função
+            if (this.value === 'aluno') {
+                turmaSelect.style.display = '';
+                turmaSelect.required = true;
+            } else if (this.value === 'coordenacao') {
+                codigoInput.style.display = '';
+            } else {
+                turmaSelect.required = false;
+            }
+        });
+
+        const registerForm = document.getElementById('registerForm');
         registerForm.addEventListener('submit', async (event) => {
             event.preventDefault();
 
@@ -61,18 +104,19 @@
                 const response = await fetch('/register', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Content-Type': 'application/json',
                     },
-                    body: new URLSearchParams(data).toString(),
+                    body: JSON.stringify(data),
                 });
 
-                const responseData = await response.json(); 
+                const responseData = await response.json();
 
                 if (response.ok) {
-                    alert(responseData.message); 
-                    window.location.href = '/register'; 
+                    alert(responseData.message);
+                    registerForm.reset();
+                    funcaoSelect.dispatchEvent(new Event('change')); // Reset conditional fields
                 } else {
-                    alert(responseData.message); 
+                    alert(responseData.message);
                 }
             } catch (error) {
                 console.error('Erro:', error);
