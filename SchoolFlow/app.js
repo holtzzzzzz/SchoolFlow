@@ -14,6 +14,7 @@ const pool = new Pool({
 });
 
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use(session({
   secret: 'gremio1903',
   resave: false,
@@ -25,16 +26,20 @@ app.use(express.static(__dirname));
 app.get('/', (req, res) => {
   if (req.session.userId) {
     const funcao = req.session.funcao;
-    if (funcao === 'responsavel') {
-      return res.redirect('/index.html');
-    } else if (funcao === 'professor') {
-      return res.redirect('/indexProfessor.html');
-    } else if (funcao === 'secretaria') {
-      return res.redirect('/indexSecretaria.html');
-    } else if (funcao === 'aluno') {
-      return res.redirect('/indexAluno.html');
-    } else {
-      res.send(`<h1>Bem-vindo, ${req.session.email}!</h1><a href="/logout">Sair</a>`);
+    
+    switch (funcao) {
+      case 'coordenacao':
+        return res.redirect('/indexCoordenador.html');
+      case 'professor':
+        return res.redirect('/indexProfessor.html');
+      case 'secretaria':
+        return res.redirect('/indexSecretaria.html');
+      case 'aluno':
+        return res.redirect('/indexAluno.html');
+      case 'responsavel':
+        return res.redirect('/indexResponsavel.html');
+      default:
+        res.send(`<h1>Bem-vindo, ${req.session.email}!</h1><a href="/logout">Sair</a>`);
     }
   } else {
     res.redirect('/login.html');
@@ -47,18 +52,40 @@ app.get('/login', (req, res) => {
 
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
+  
   try {
-    const user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
-    if (user.rows.length > 0) {
-      const validPassword = await bcrypt.compare(password, user.rows[0].password);
-      if (validPassword) {
-        req.session.userId = user.rows[0].id;
-        req.session.email = user.rows[0].email;
-        req.session.funcao = user.rows[0].funcao;
-
-        return res.status(200).json({ message: 'Login bem-sucedido', funcao: user.rows[0].funcao });
+    let user = null;
+    let funcao = null;
+    
+    // Buscar em todas as tabelas de usuários
+    const tabelas = [
+      { nome: 'Professores', funcao: 'professor', id: 'id_professor' },
+      { nome: 'Alunos', funcao: 'aluno', id: 'id_aluno' },
+      { nome: 'Responsaveis', funcao: 'responsavel', id: 'id_responsavel' },
+      { nome: 'Coordenacao', funcao: 'coordenacao', id: 'id_coordenacao' }
+    ];
+    
+    for (const tabela of tabelas) {
+      const result = await pool.query(`SELECT * FROM ${tabela.nome} WHERE email = $1`, [email]);
+      if (result.rows.length > 0) {
+        user = result.rows[0];
+        funcao = tabela.funcao;
+        req.session.userIdField = tabela.id;
+        break;
       }
     }
+    
+    if (user) {
+      const validPassword = await bcrypt.compare(password, user.senha);
+      if (validPassword) {
+        req.session.userId = user[req.session.userIdField];
+        req.session.email = user.email;
+        req.session.funcao = funcao;
+        req.session.nome = user.nome;
+        return res.status(200).json({ message: 'Login bem-sucedido', funcao: funcao });
+      }
+    }
+    
     return res.status(401).json({ message: 'Usuário ou senha inválidos' });
   } catch (err) {
     console.error(err);
@@ -70,18 +97,76 @@ app.get('/register', (req, res) => {
   res.sendFile(__dirname + '/register.html');
 });
 
-app.post('/register', async (req, res) => {
-  const { email, password, nome_completo, data_nascimento, funcao, telefone, id_turma } = req.body;
+// Rota para buscar turmas
+app.get('/api/turmas', async (req, res) => {
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    await pool.query(
-      `INSERT INTO users (email, password, nome_completo, data_nascimento, funcao, telefone, id_turma)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [email, hashedPassword, nome_completo, data_nascimento, funcao, telefone || null, id_turma || null]
-    );
-    res.status(200).json({ message: 'Usuário registrado com sucesso!' });
+    const result = await pool.query('SELECT id_turma, ano, serie FROM Turmas ORDER BY ano, serie');
+    res.json(result.rows);
   } catch (err) {
     console.error(err);
+    res.status(500).json({ message: 'Erro ao buscar turmas' });
+  }
+});
+
+// Rota para buscar disciplinas
+app.get('/api/disciplinas', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id_disciplina, nome FROM Disciplinas ORDER BY nome');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erro ao buscar disciplinas' });
+  }
+});
+
+app.post('/register', async (req, res) => {
+  const { email, password, nome, funcao, id_turma, codigo } = req.body;
+  
+  try {
+    // Validar funções
+    const funcoesValidas = ['aluno', 'professor', 'coordenacao', 'responsavel'];
+    if (!funcoesValidas.includes(funcao)) {
+      return res.status(400).json({ message: 'Função inválida.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    let query = '';
+    let params = [];
+    
+    switch (funcao) {
+      case 'aluno':
+        if (!id_turma) {
+          return res.status(400).json({ message: 'Turma é obrigatória para alunos.' });
+        }
+        query = 'INSERT INTO Alunos (nome, email, senha, id_turma) VALUES ($1, $2, $3, $4)';
+        params = [nome, email, hashedPassword, id_turma];
+        break;
+        
+      case 'professor':
+        query = 'INSERT INTO Professores (nome, email, senha) VALUES ($1, $2, $3)';
+        params = [nome, email, hashedPassword];
+        break;
+        
+      case 'responsavel':
+        query = 'INSERT INTO Responsaveis (nome, email, senha) VALUES ($1, $2, $3)';
+        params = [nome, email, hashedPassword];
+        break;
+        
+      case 'coordenacao':
+        query = 'INSERT INTO Coordenacao (nome, email, senha, codigo) VALUES ($1, $2, $3, $4)';
+        params = [nome, email, hashedPassword, codigo || null];
+        break;
+    }
+    
+    await pool.query(query, params);
+    res.status(200).json({ message: 'Usuário registrado com sucesso!' });
+    
+  } catch (err) {
+    console.error(err);
+    if (err.code === '23505') { // Erro de email duplicado
+      return res.status(400).json({ message: 'Este email já está cadastrado.' });
+    }
     return res.status(500).json({ message: 'Erro ao registrar usuário. Tente novamente.' });
   }
 });
