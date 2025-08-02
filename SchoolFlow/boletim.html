@@ -4,7 +4,7 @@
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="styles.css">
-    <title>Boletim Escolar - SchoolFLow</title>
+    <title>Boletim Escolar - SchoolFlow</title>
   </head>    
   <body>
     <nav class="sidebar">
@@ -22,24 +22,74 @@
     </nav>
     <main class="main-content">
       <div>
-        <h2>Nome:</h2>
-        <h2>Turma:</h2>
-        <h2>Matrícula:</h2>
+        <h2>Nome: <span id="aluno-nome"></span></h2>
+        <h2>Turma: <span id="aluno-turma"></span></h2>
+        <h2>Matrícula: <span id="aluno-matricula"></span></h2>
+        <label for="alunoIdInput">ID do Aluno:</label>
+        <input type="text" id="alunoIdInput" value="3" />
+        <button onclick="buscarBoletim()">Buscar Boletim</button>
       </div>
       <table>
-        <tr>
-          <th>Matéria</th>
-          <th>I1</th>
-          <th>I2</th>
-          <th>EPA</th>
-          <th>N1</th>
-          <th>N2</th>
-          <th>N3</th>
-          <th>MP</th>
-          <th>REC</th>
-          <th>MT</th>
-          <th>faltas</th>
-        </tr>
+        <thead>
+          <tr>
+            <th>Matéria</th>
+            <th>I1</th>
+            <th>I2</th>
+            <th>EPA</th>
+            <th>N1</th>
+            <th>N2</th>
+            <th>N3</th>
+            <th>MP</th>
+            <th>REC</th>
+            <th>MT</th>
+            <th>faltas</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
       </table>
+      <script>
+      async function buscarBoletim() {
+        const alunoId = document.getElementById('alunoIdInput').value;
+        try {
+          const response = await fetch(`/api/boletim?alunoId=${alunoId}`);
+          if (!response.ok) {
+            throw new Error(`Erro ao buscar boletim: ${response.status} ${response.statusText}`);
+          }
+          const data = await response.json();
+
+          // Preencher dados do aluno
+          document.getElementById('aluno-nome').textContent = data.nome || '';
+          document.getElementById('aluno-turma').textContent = data.turma || '';
+          document.getElementById('aluno-matricula').textContent = data.matricula || '';
+
+          // Preencher a tabela com as notas
+          const tbody = document.querySelector('table tbody');
+          tbody.innerHTML = '';
+          (data.notas || []).forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${item.materia}</td>
+              <td>${item.i1}</td>
+              <td>${item.i2}</td>
+              <td>${item.epa}</td>
+              <td>${item.n1}</td>
+              <td>${item.n2}</td>
+              <td>${item.n3}</td>
+              <td>${item.mp}</td>
+              <td>${item.rec}</td>
+              <td>${item.mt}</td>
+              <td>${item.faltas}</td>
+            `;
+            tbody.appendChild(row);
+          });
+        } catch (error) {
+          alert(error.message);
+        }
+      }
+
+      window.onload = buscarBoletim;
+      </script>
     </main>
   </body>
+</html>
