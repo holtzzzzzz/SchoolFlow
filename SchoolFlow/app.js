@@ -57,7 +57,6 @@ app.post('/login', async (req, res) => {
     let user = null;
     let funcao = null;
     
-    // Buscar em todas as tabelas de usuários
     const tabelas = [
       { nome: 'Professores', funcao: 'professor', id: 'id_professor' },
       { nome: 'Alunos', funcao: 'aluno', id: 'id_aluno' },
@@ -96,6 +95,52 @@ app.post('/login', async (req, res) => {
 app.get('/register', (req, res) => {
   res.sendFile(__dirname + '/register.html');
 });
+app.get('/api/boletim', async (req, res) => {
+  const { alunoId } = req.query;
+  if (!alunoId) {
+    return res.status(400).json({ message: 'ID do aluno é obrigatório.' });
+  }
+
+  try {
+    // Buscar dados do aluno
+    const alunoResult = await pool.query(
+      `SELECT nome, id_turma FROM Alunos WHERE id_aluno = $1`,
+      [alunoId]
+    );
+    if (alunoResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Aluno não encontrado.' });
+    }
+    const aluno = alunoResult.rows[0];
+
+    // Buscar dados da turma
+    const turmaResult = await pool.query(
+      `SELECT ano, serie FROM Turmas WHERE id_turma = $1`,
+      [aluno.id_turma]
+    );
+    const turma = turmaResult.rows[0];
+    const turmaStr = turma ? `${turma.ano}º ${turma.serie}` : '';
+
+    // Buscar notas
+    const notasResult = await pool.query(
+      `SELECT d.nome AS materia, n.i1, n.i2, n.epa, n.n1, n.n2, n.n3, n.rec, n.faltas
+      FROM notas n
+      JOIN disciplinas d ON n.id_disciplina = d.id_disciplina
+      WHERE n.id_aluno = $1
+      ORDER BY d.nome`,
+      [alunoId]
+    );
+
+    res.json({
+      nome: aluno.nome,
+      turma: turmaStr,
+      matricula: aluno.matricula,
+      notas: notasResult.rows
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erro ao buscar boletim.' });
+  }
+});
 
 // Rota para buscar turmas
 app.get('/api/turmas', async (req, res) => {
@@ -123,7 +168,6 @@ app.post('/register', async (req, res) => {
   const { email, password, nome, funcao, id_turma, codigo } = req.body;
   
   try {
-    // Validar funções
     const funcoesValidas = ['aluno', 'professor', 'coordenacao', 'responsavel'];
     if (!funcoesValidas.includes(funcao)) {
       return res.status(400).json({ message: 'Função inválida.' });
@@ -164,7 +208,7 @@ app.post('/register', async (req, res) => {
     
   } catch (err) {
     console.error(err);
-    if (err.code === '23505') { // Erro de email duplicado
+    if (err.code === '23505') { 
       return res.status(400).json({ message: 'Este email já está cadastrado.' });
     }
     return res.status(500).json({ message: 'Erro ao registrar usuário. Tente novamente.' });
