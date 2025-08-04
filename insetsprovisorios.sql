@@ -46,4 +46,18 @@ INSERT INTO Alunos_Responsaveis (id_aluno, id_responsavel) VALUES
 -- Inserts para a tabela Coordenacao
 INSERT INTO Coordenacao (nome, email, senha, codigo) VALUES
 ('Beatriz Costa', 'beatriz.costa@coordenacao.com', 'coord123', 'COD001');
+-- Novas notas para Lucas Pereira (id_aluno = 3)
+INSERT INTO Notas (id_aluno, id_disciplina, i1, i2, epa, n1, n2, n3, rec, faltas) VALUES
+(3, 1, 8.5, 9.0, 9.2, 8.9, 9.1, 9.3, NULL, 1), -- Matemática
+(3, 3, 7.0, 6.5, 7.5, 7.0, 7.2, 7.4, NULL, 2), -- História
+(3, 4, 8.0, 8.2, 8.8, 8.3, 8.5, 8.7, NULL, 0); -- Ciências
+-- Notas adicionais para Lucas Pereira (id_aluno = 3)
+INSERT INTO Notas (id_aluno, id_disciplina, i1, i2, epa, n1, n2, n3, rec, faltas) VALUES
+(3, 5, 6.5, 7.0, 7.5, 7.0, 6.8, 7.2, NULL, 1), -- Geografia
+(3, 6, 9.0, 8.5, 9.5, 9.0, 9.1, 9.3, NULL, 0), -- Inglês
+(3, 7, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, NULL, 0); -- Educação Física
+INSERT INTO Disciplinas (nome) VALUES
+('Geografia'),
+('Inglês'),
+('Educação Física');
 
