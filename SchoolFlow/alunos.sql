@@ -49,7 +49,6 @@ CREATE TABLE Notas (
     i1 NUMERIC(5,2),
     i2 NUMERIC(5,2),
     epa NUMERIC(5,2),
-    n1 NUMERIC(5,2),
     n2 NUMERIC(5,2),
     n3 NUMERIC(5,2),
     rec NUMERIC(5,2),
