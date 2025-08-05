@@ -9,7 +9,7 @@ const pool = new Pool({
   user: 'postgres',
   host: 'localhost',
   database: 'Alunos',
-  password: '1903',
+  password: '56$&ff44DF',
   port: 5432,
 });
 
@@ -122,7 +122,7 @@ app.get('/api/boletim', async (req, res) => {
 
     // Buscar notas
     const notasResult = await pool.query(
-      `SELECT d.nome AS materia, n.i1, n.i2, n.epa, n.n1, n.n2, n.n3, n.rec, n.faltas
+      `SELECT d.nome AS materia, n.i1, n.i2, n.epa, n.n2, n.n3, n.rec, n.faltas
       FROM notas n
       JOIN disciplinas d ON n.id_disciplina = d.id_disciplina
       WHERE n.id_aluno = $1
