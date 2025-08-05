@@ -68,7 +68,13 @@
           let mt = Math.max(mediaParcial, recuperacao);
           return mt > 6 ? 6 : mt;
         }
-      
+        function N1(epa, i1, i2){
+          const ins1 = Number(i1)
+          const ins2 = Number(i2)
+          const epa_ = Number(epa)
+          let n1 = (ins1 + ins2 + epa_)/3
+          return n1
+        }
 
         // Função principal de busca do boletim
         async function buscarBoletim() {
@@ -95,7 +101,8 @@
       
             // Preencher a tabela com as notas
             (data.notas || []).forEach(item => {
-              const mp = calcularMediaParcial(item.n1, item.n2, item.n3);
+              const n1 = N1(item.epa, item.i1, item.i2)
+              const mp = calcularMediaParcial(n1, item.n2, item.n3);
               const mt = calcularMediaTotal(mp, item.rec);
               const row = document.createElement('tr');
               var rec_ = Number(item.rec)
@@ -108,7 +115,7 @@
                 <td>${item.i1 ?? '-'}</td>
                 <td>${item.i2 ?? '-'}</td>
                 <td>${item.epa ?? '-'}</td>
-                <td>${item.n1 ?? '-'}</td>
+                <td>${n1.toFixed(2)}</td>
                 <td>${item.n2 ?? '-'}</td>
                 <td>${item.n3 ?? '-'}</td>
                 <td>${mp.toFixed(2)}</td>
