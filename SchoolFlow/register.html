@@ -13,7 +13,7 @@
         </div>
         <div class="nav-links">
             <a href="indexSecretaria.html"><img src="imgs/home.png" alt="Home">Início</a>
-            <a href="register.html"><img src="imgs/registro.png" alt="Register">Registrar Alunos</a>
+            <a href="register.html"><img src="imgs/registro.png" alt="Register">Registrar Usuários</a>
             <a href="#"><img src="imgs/turma.png" alt="Class">Desempenho da Turma</a>
             <a href="#"><img src="imgs/paperplane.png" alt="Message">Mensagens</a>
             <a href="#"><img src="imgs/bell.png" alt="Bell">Avisos</a>
@@ -24,31 +24,35 @@
     
     <div class="login-container">
         <img src="imgs/logo.png" alt="Logo" />
-        <form id="registerForm" action="/register" method="POST">
+        <h2>Cadastro de Usuário</h2>
+        <select id="tipoCadastro">
+            <option value="">Selecione</option>
+            <option value="aluno">Aluno</option>
+            <option value="professor">Professor</option>
+            <option value="responsavel">Responsável</option>
+            <option value="secretaria">Secretaria</option>
+        </select>
+        
+        <!-- Formulário único, campos exibidos dinamicamente -->
+        <form id="registerForm" action="/register" method="POST" style="margin-top: 20px;">
+            <input type="hidden" name="funcao" id="funcao" />
             <input type="text" name="nome" placeholder="Nome Completo" required /><br />
             <input type="email" name="email" placeholder="Email" required /><br />
             <input type="password" name="password" placeholder="Senha" required /><br />
-
-            <select name="funcao" id="funcao" required>
-                <option value="">Selecione a função</option>
-                <option value="aluno">Aluno</option>
-                <option value="professor">Professor</option>
-                <option value="responsavel">Responsável</option>
-                <option value="coordenacao">Coordenação</option>
-            </select><br />
 
             <select name="id_turma" id="id_turma" style="display:none;">
                 <option value="">Selecione a Turma</option>
             </select><br />
 
-            <input type="text" name="codigo" id="codigo" placeholder="Código (apenas para Coordenação)" style="display:none;" /><br />
+            <input type="text" name="codigo" id="codigo" placeholder="Código (apenas para Secretaria)" style="display:none;" /><br />
 
             <button class="login-button" type="submit">Registrar</button>
         </form>
     </div>
 
     <script>
-        const funcaoSelect = document.getElementById('funcao');
+        const tipoCadastro = document.getElementById('tipoCadastro');
+        const funcaoInput = document.getElementById('funcao');
         const turmaSelect = document.getElementById('id_turma');
         const codigoInput = document.getElementById('codigo');
 
@@ -57,7 +61,6 @@
             try {
                 const response = await fetch('/api/turmas');
                 const turmas = await response.json();
-                
                 turmaSelect.innerHTML = '<option value="">Selecione a Turma</option>';
                 turmas.forEach(turma => {
                     const option = document.createElement('option');
@@ -69,33 +72,32 @@
                 console.error('Erro ao carregar turmas:', error);
             }
         }
-
-        // Carregar turmas quando a página carregar
         carregarTurmas();
 
-        funcaoSelect.addEventListener('change', function() {
-            // Esconder todos os campos condicionais
+        tipoCadastro.addEventListener('change', function() {
+            funcaoInput.value = this.value;
             turmaSelect.style.display = 'none';
             codigoInput.style.display = 'none';
-            
-            // Limpar valores
-            turmaSelect.value = '';
-            codigoInput.value = '';
-            
-            // Mostrar campos específicos baseado na função
+            turmaSelect.required = false;
+            codigoInput.required = false;
+
             if (this.value === 'aluno') {
                 turmaSelect.style.display = '';
                 turmaSelect.required = true;
-            } else if (this.value === 'coordenacao') {
+            } else if (this.value === 'secretaria') {
                 codigoInput.style.display = '';
-            } else {
-                turmaSelect.required = false;
+                codigoInput.required = true;
             }
         });
 
         const registerForm = document.getElementById('registerForm');
         registerForm.addEventListener('submit', async (event) => {
             event.preventDefault();
+
+            if (!tipoCadastro.value) {
+                alert('Selecione o tipo de cadastro!');
+                return;
+            }
 
             const formData = new FormData(registerForm);
             const data = Object.fromEntries(formData);
@@ -114,7 +116,10 @@
                 if (response.ok) {
                     alert(responseData.message);
                     registerForm.reset();
-                    funcaoSelect.dispatchEvent(new Event('change')); // Reset conditional fields
+                    tipoCadastro.value = '';
+                    funcaoInput.value = '';
+                    turmaSelect.style.display = 'none';
+                    codigoInput.style.display = 'none';
                 } else {
                     alert(responseData.message);
                 }
