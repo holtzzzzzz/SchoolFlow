@@ -9,7 +9,7 @@ const pool = new Pool({
   user: 'postgres',
   host: 'localhost',
   database: 'Alunos',
-  password: '56$&ff44DF',
+  password: '1903',
   port: 5432,
 });
 
@@ -223,3 +223,4 @@ app.get('/logout', (req, res) => {
 app.listen(3000, () => {
   console.log('Servidor rodando na porta 3000');
 });
+
