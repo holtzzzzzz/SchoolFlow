@@ -25,10 +25,6 @@
         <h2>Nome: <span id="aluno-nome"></span></h2>
         <h2>Turma: <span id="aluno-turma"></span></h2>
         <h2>Matrícula: <span id="aluno-matricula"></span></h2>
-<!----        <label for="alunoIdInput">ID do Aluno:</label>
-        <input type="text" id="alunoIdInput" value="3" />
-        <button id="buscarBtn">Buscar Boletim</button>
-      -->
       </div>
       <table>
         <thead>
@@ -46,12 +42,9 @@
             <th>faltas</th>
           </tr>
         </thead>
-        <tbody id="boletim-tbody">
-
-        </tbody>
+        <tbody id="boletim-tbody"></tbody>
       </table>
       <script>
-        // Função para calcular a média parcial com conversão segura
         function calcularMediaParcial(n1, n2, n3) {
           const nota1 = Number(n1) || 0;
           const nota2 = Number(n2) || 0;
@@ -59,78 +52,71 @@
           return (nota1 + nota2 + (nota3 * 2)) / 4;
         }
       
-        // Função para calcular a média total com base na MP e REC
         function calcularMediaTotal(mp, rec) {
           const mediaParcial = Number(mp) || 0;
           const recuperacao = Number(rec) || 0;
-      
-          if (mediaParcial >= 6) return mediaParcial  ;
+          if (mediaParcial >= 6) return mediaParcial;
           let mt = Math.max(mediaParcial, recuperacao);
           return mt > 6 ? 6 : mt;
         }
+
         function N1(epa, i1, i2){
-          const ins1 = Number(i1)
-          const ins2 = Number(i2)
-          const epa_ = Number(epa)
-          let n1 = (ins1 + ins2 + epa_)/3
-          return n1
+          const ins1 = Number(i1);
+          const ins2 = Number(i2);
+          const epa_ = Number(epa);
+          return (ins1 + ins2 + epa_) / 3;
         }
 
-        // Função principal de busca do boletim
         async function buscarBoletim() {
-        const nomeSpan = document.getElementById('aluno-nome');
-        const turmaSpan = document.getElementById('aluno-turma');
-        const matriculaSpan = document.getElementById('aluno-matricula');
-        const tbody = document.getElementById('boletim-tbody');
+          const nomeSpan = document.getElementById('aluno-nome');
+          const turmaSpan = document.getElementById('aluno-turma');
+          const matriculaSpan = document.getElementById('aluno-matricula');
+          const tbody = document.getElementById('boletim-tbody');
 
-        try {
-          const response = await fetch(`/api/boletim`);
-          if (!response.ok)
-            throw new Error(`Erro ao buscar boletim: ${response.status} ${response.statusText}`);
+          try {
+            const response = await fetch(`/api/boletim`);
+            if (!response.ok) throw new Error(`Erro ao buscar boletim: ${response.status} ${response.statusText}`);
 
-          const data = await response.json();
+            const data = await response.json();
 
-          nomeSpan.textContent = data.nome || '---';
-          turmaSpan.textContent = data.turma || '---';
-          matriculaSpan.textContent = data.matricula || '---';
+            nomeSpan.textContent = data.nome || '---';
+            turmaSpan.textContent = data.turma || '---';
+            matriculaSpan.textContent = data.matricula || '---';
 
-          tbody.innerHTML = '';
+            tbody.innerHTML = '';
 
-          (data.notas || []).forEach(item => {
-            const n1 = N1(item.epa, item.i1, item.i2)
-            const mp = calcularMediaParcial(n1, item.n2, item.n3);
-            const mt = calcularMediaTotal(mp, item.rec);
-            const row = document.createElement('tr');
-            var rec_ = Number(item.rec)
-            if (mp > 6){
-              rec_ = String(rec_)
-              rec_ = '-'
-            }
-            row.innerHTML = `
-              <td>${item.materia}</td>
-              <td>${item.i1 ?? '-'}</td>
-              <td>${item.i2 ?? '-'}</td>
-              <td>${item.epa ?? '-'}</td>
-              <td>${n1.toFixed(2)}</td>
-              <td>${item.n2 ?? '-'}</td>
-              <td>${item.n3 ?? '-'}</td>
-              <td>${mp.toFixed(2)}</td>
-              <td>${typeof rec_ === 'number' ? rec_.toFixed(2) : rec_}</td>
-              <td>${mt.toFixed(2)}</td>
-              <td>${item.faltas ?? '-'}</td>
-            `;
-            tbody.appendChild(row);
-          });
+            (data.notas || []).forEach(item => {
+              const n1 = N1(item.epa, item.i1, item.i2);
+              const mp = calcularMediaParcial(n1, item.n2, item.n3);
+              const mt = calcularMediaTotal(mp, item.rec);
+              const row = document.createElement('tr');
+              let rec_ = Number(item.rec);
+              if (mp > 6){
+                rec_ = '-';
+              }
+              row.innerHTML = `
+                <td>${item.materia}</td>
+                <td>${item.i1 ?? '-'}</td>
+                <td>${item.i2 ?? '-'}</td>
+                <td>${item.epa ?? '-'}</td>
+                <td>${n1.toFixed(2)}</td>
+                <td>${item.n2 ?? '-'}</td>
+                <td>${item.n3 ?? '-'}</td>
+                <td>${mp.toFixed(2)}</td>
+                <td>${typeof rec_ === 'number' ? rec_.toFixed(2) : rec_}</td>
+                <td>${mt.toFixed(2)}</td>
+                <td>${item.faltas ?? '-'}</td>
+              `;
+              tbody.appendChild(row);
+            });
 
-        } catch (error) {
-          alert(`Erro: ${error.message}`);
+          } catch (error) {
+            alert(`Erro: ${error.message}`);
+          }
         }
-      }
-        // Adiciona evento ao botão
-        // Carrega boletim automaticamente ao abrir a página
+
         window.addEventListener('load', buscarBoletim);
       </script>
-
     </main>
   </body>
 </html>
