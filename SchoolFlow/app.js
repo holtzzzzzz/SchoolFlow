@@ -23,6 +23,7 @@ app.use(session({
 
 app.use(express.static(__dirname));
 
+// Página inicial dependendo da função
 app.get('/', (req, res) => {
   if (req.session.userId) {
     const funcao = req.session.funcao;
@@ -46,10 +47,12 @@ app.get('/', (req, res) => {
   }
 });
 
+// Página de login
 app.get('/login', (req, res) => {
   res.sendFile(__dirname + '/login.html');
 });
 
+// Login
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   
@@ -81,7 +84,11 @@ app.post('/login', async (req, res) => {
         req.session.email = user.email;
         req.session.funcao = funcao;
         req.session.nome = user.nome;
-        return res.status(200).json({ message: 'Login bem-sucedido', funcao: funcao });
+        return res.status(200).json({ 
+          message: 'Login bem-sucedido', 
+          funcao: funcao,
+          id: req.session.userId // devolve id para uso no front se precisar
+        });
       }
     }
     
@@ -92,76 +99,9 @@ app.post('/login', async (req, res) => {
   }
 });
 
+// Registro de usuário
 app.get('/register', (req, res) => {
   res.sendFile(__dirname + '/register.html');
-});
-app.get('/api/boletim', async (req, res) => {
-  const { alunoId } = req.query;
-  if (!alunoId) {
-    return res.status(400).json({ message: 'ID do aluno é obrigatório.' });
-  }
-
-  try {
-    // Buscar dados do aluno
-    const alunoResult = await pool.query(
-      `SELECT nome, id_turma FROM Alunos WHERE id_aluno = $1`,
-      [alunoId]
-    );
-    if (alunoResult.rows.length === 0) {
-      return res.status(404).json({ message: 'Aluno não encontrado.' });
-    }
-    const aluno = alunoResult.rows[0];
-
-    // Buscar dados da turma
-    const turmaResult = await pool.query(
-      `SELECT ano, serie FROM Turmas WHERE id_turma = $1`,
-      [aluno.id_turma]
-    );
-    const turma = turmaResult.rows[0];
-    const turmaStr = turma ? `${turma.ano}º ${turma.serie}` : '';
-
-    // Buscar notas
-    const notasResult = await pool.query(
-      `SELECT d.nome AS materia, n.i1, n.i2, n.epa, n.n2, n.n3, n.rec, n.faltas
-      FROM notas n
-      JOIN disciplinas d ON n.id_disciplina = d.id_disciplina
-      WHERE n.id_aluno = $1
-      ORDER BY d.nome`,
-      [alunoId]
-    );
-
-    res.json({
-      nome: aluno.nome,
-      turma: turmaStr,
-      matricula: aluno.matricula,
-      notas: notasResult.rows
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Erro ao buscar boletim.' });
-  }
-});
-
-// Rota para buscar turmas
-app.get('/api/turmas', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT id_turma, ano, serie FROM Turmas ORDER BY ano, serie');
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Erro ao buscar turmas' });
-  }
-});
-
-// Rota para buscar disciplinas
-app.get('/api/disciplinas', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT id_disciplina, nome FROM Disciplinas ORDER BY nome');
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Erro ao buscar disciplinas' });
-  }
 });
 
 app.post('/register', async (req, res) => {
@@ -215,6 +155,75 @@ app.post('/register', async (req, res) => {
   }
 });
 
+// Boletim - apenas aluno logado pode ver
+// Boletim - apenas aluno logado pode ver
+app.get('/api/boletim', async (req, res) => {
+  if (!req.session.userId || req.session.funcao !== 'aluno') {
+    return res.status(403).json({ message: 'Acesso negado. Apenas alunos podem ver boletim.' });
+  }
+
+  const alunoId = req.session.userId;
+  try {
+    const alunoResult = await pool.query(
+      `SELECT nome, id_aluno, id_turma FROM Alunos WHERE id_aluno = $1`,
+      [alunoId]
+    );
+    if (alunoResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Aluno não encontrado.' });
+    }
+    const aluno = alunoResult.rows[0];
+
+    const turmaResult = await pool.query(
+      `SELECT ano, serie FROM Turmas WHERE id_turma = $1`,
+      [aluno.id_turma]
+    );
+    const turma = turmaResult.rows[0];
+    const turmaStr = turma ? `${turma.ano}º ${turma.serie}` : '';
+
+    const notasResult = await pool.query(
+      `SELECT d.nome AS materia, n.i1, n.i2, n.epa, n.n2, n.n3, n.rec, n.faltas
+       FROM Notas n
+       JOIN Disciplinas d ON n.id_disciplina = d.id_disciplina
+       WHERE n.id_aluno = $1
+       ORDER BY d.nome`,
+      [alunoId]
+    );
+
+    res.json({
+      nome: aluno.nome,
+      turma: turmaStr,
+      id_aluno: aluno.id_aluno,   // corrigido
+      notas: notasResult.rows
+    });
+  } catch (err) {
+    console.error("Erro no /api/boletim:", err);
+    res.status(500).json({ message: 'Erro ao buscar boletim.' });
+  }
+});
+
+
+// Outras APIs auxiliares
+app.get('/api/turmas', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id_turma, ano, serie FROM Turmas ORDER BY ano, serie');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erro ao buscar turmas' });
+  }
+});
+
+app.get('/api/disciplinas', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id_disciplina, nome FROM Disciplinas ORDER BY nome');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erro ao buscar disciplinas' });
+  }
+});
+
+// Logout
 app.get('/logout', (req, res) => {
   req.session.destroy();
   res.redirect('/login');
@@ -223,4 +232,3 @@ app.get('/logout', (req, res) => {
 app.listen(3000, () => {
   console.log('Servidor rodando na porta 3000');
 });
-
