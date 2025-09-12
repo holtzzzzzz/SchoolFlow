@@ -39,6 +39,11 @@
                     const responseData = await response.json();
                     const funcao = responseData.funcao;
 
+                    // guarda id no sessionStorage se for aluno
+                    if (funcao === 'aluno') {
+                        sessionStorage.setItem('alunoId', responseData.id);
+                    }
+
                     switch (funcao) {
                         case 'responsavel':
                             window.location.href = '/index.html';
@@ -48,6 +53,9 @@
                             break;
                         case 'secretaria':
                             window.location.href = '/indexSecretaria.html';
+                            break;
+                        case 'aluno':
+                            window.location.href = '/boletim.html';
                             break;
                         default:
                             window.location.href = '/index.html';
