@@ -1,0 +1,32 @@
+-- Inserir turmas
+INSERT INTO Turmas (ano, serie) VALUES (2025, '2º Ano A');
+INSERT INTO Turmas (ano, serie) VALUES (2025, '3º Ano B');
+
+-- Inserir disciplinas
+INSERT INTO Disciplinas (nome) VALUES ('Matemática');
+INSERT INTO Disciplinas (nome) VALUES ('Português');
+
+-- Inserir professor
+INSERT INTO Professores (nome, email, senha) 
+VALUES ('João Silva', 'joao.silva@escola.com', '123456');
+
+-- Vincular professor à disciplina e turma
+INSERT INTO Professores_Disciplinas_Turmas (id_professor, id_disciplina, id_turma)
+VALUES (1, 1, 1); -- Professor 1 dá Matemática para a Turma 1
+
+-- Inserir alunos
+INSERT INTO Alunos (nome, id_turma) VALUES ('Ana Souza', 1);
+INSERT INTO Alunos (nome, id_turma) VALUES ('Carlos Pereira', 1);
+INSERT INTO Alunos (nome, id_turma) VALUES ('Maria Oliveira', 1);
+
+-- Criar as linhas de notas (em branco) para cada aluno x disciplina
+INSERT INTO Notas (id_aluno, id_disciplina, i1, i2, epa, n2, n3, rec, faltas)
+VALUES 
+  (1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+  (2, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+  (3, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+
+-- Se quiser já colocar notas de exemplo:
+UPDATE Notas SET i1 = 7.5, i2 = 8.0, faltas = 2 WHERE id_aluno = 1 AND id_disciplina = 1;
+UPDATE Notas SET i1 = 6.0, i2 = 7.0, faltas = 5 WHERE id_aluno = 2 AND id_disciplina = 1;
+UPDATE Notas SET i1 = 9.0, i2 = 9.5, faltas = 0 WHERE id_aluno = 3 AND id_disciplina = 1;
