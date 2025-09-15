@@ -1,51 +1,120 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="styles.css">
-    <title>Boletim Escolar - SchoolFlow</title>
-  </head>    
-  <body>
-    <nav class="sidebar">
-        <div class="sidebar-header">
-          <img src="imgs/menu.png" alt="Menu">
-        </div>
-        <div class="nav-links">
-          <a href="indexProfessor.html"><img src="imgs/home.png" alt="Home">Início</a>
-          <a href="#"><img src="imgs/turma.png" alt="Class">Desempenho da Turma</a>
-          <a href="#"><img src="imgs/faltas.png" alt="faltas">Faltas</a>
-          <a href="#"><img src="imgs/calendar.png" alt="Calendar">Calendário</a>
-          <a href="boletimProfessor.html"><img src="imgs/grades.png" alt="Grades">Notas</a>
-        </div>
-      </nav>
-    <main class="main-content">
-      <div>
-        <h2>Turma: <span id="aluno-turma"></span></h2>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="styles.css">
+  <title>Boletim Professor - SchoolFlow</title>
+</head>
+<body>
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <img src="imgs/menu.png" alt="Menu">
+    </div>
+    <div class="nav-links">
+      <a href="indexProfessor.html"><img src="imgs/home.png" alt="Home">Início</a>
+      <a href="boletimProfessor.html"><img src="imgs/book.png" alt="Book">Boletim da Turma</a>
+      <a href="#"><img src="imgs/message.png" alt="Message">Mensagens</a>
+      <a href="#"><img src="imgs/bell.png" alt="Bell">Avisos</a>
+    </div>
+  </nav>
 
-        <label for="alunoIdInput">ID do Aluno:</label>
+  <main class="main-content">
+    <h2>Lançamento de Notas</h2>
 
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Matéria</th>
-            <th>I1</th>
-            <th>I2</th>
-            <th>EPA</th>
-            <th>N1</th>
-            <th>N2</th>
-            <th>N3</th>
-            <th>MP</th>
-            <th>REC</th>
-            <th>MT</th>
-            <th>faltas</th>
-          </tr>
-        </thead>
-        <tbody id="boletim-tbody">
+    <div>
+      <label for="turmaSelect">Turma:</label>
+      <select id="turmaSelect"></select>
 
-        </tbody>
-      </table>
-    </main>
-  </body>
+      <label for="disciplinaSelect">Disciplina:</label>
+      <select id="disciplinaSelect"></select>
+
+      <button onclick="carregarAlunos()">Carregar</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Aluno</th>
+          <th>I1</th>
+          <th>I2</th>
+          <th>EPA</th>
+          <th>N2</th>
+          <th>N3</th>
+          <th>REC</th>
+          <th>Faltas</th>
+          <th>Ação</th>
+        </tr>
+      </thead>
+      <tbody id="alunos-tbody"></tbody>
+    </table>
+  </main>
+
+  <script>
+    async function carregarSelects() {
+      const turmaSelect = document.getElementById('turmaSelect');
+      const discSelect = document.getElementById('disciplinaSelect');
+
+      const turmas = await fetch('/api/turmas').then(r => r.json());
+      turmaSelect.innerHTML = turmas.map(t => 
+        `<option value="${t.id_turma}">${t.ano}º ${t.serie}</option>`
+      ).join('');
+
+      const disciplinas = await fetch('/api/disciplinas').then(r => r.json());
+      discSelect.innerHTML = disciplinas.map(d => 
+        `<option value="${d.id_disciplina}">${d.nome}</option>`
+      ).join('');
+    }
+
+    async function carregarAlunos() {
+      const turmaId = document.getElementById('turmaSelect').value;
+      const disciplinaId = document.getElementById('disciplinaSelect').value;
+
+      const alunos = await fetch(`/api/turma/${turmaId}/alunos`).then(r => r.json());
+      const tbody = document.getElementById('alunos-tbody');
+      tbody.innerHTML = '';
+
+      alunos.forEach(aluno => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${aluno.nome}</td>
+          <td><input type="number" step="0.1" value="${aluno.i1 ?? ''}" id="i1-${aluno.id_aluno}"></td>
+          <td><input type="number" step="0.1" value="${aluno.i2 ?? ''}" id="i2-${aluno.id_aluno}"></td>
+          <td><input type="number" step="0.1" value="${aluno.epa ?? ''}" id="epa-${aluno.id_aluno}"></td>
+          <td><input type="number" step="0.1" value="${aluno.n2 ?? ''}" id="n2-${aluno.id_aluno}"></td>
+          <td><input type="number" step="0.1" value="${aluno.n3 ?? ''}" id="n3-${aluno.id_aluno}"></td>
+          <td><input type="number" step="0.1" value="${aluno.rec ?? ''}" id="rec-${aluno.id_aluno}"></td>
+          <td><input type="number" value="${aluno.faltas ?? ''}" id="faltas-${aluno.id_aluno}"></td>
+          <td><button onclick="salvarNota(${aluno.id_aluno}, ${disciplinaId})">Salvar</button></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    async function salvarNota(id_aluno, id_disciplina) {
+      const payload = {
+        id_aluno,
+        id_disciplina,
+        i1: document.getElementById(`i1-${id_aluno}`).value,
+        i2: document.getElementById(`i2-${id_aluno}`).value,
+        epa: document.getElementById(`epa-${id_aluno}`).value,
+        n2: document.getElementById(`n2-${id_aluno}`).value,
+        n3: document.getElementById(`n3-${id_aluno}`).value,
+        rec: document.getElementById(`rec-${id_aluno}`).value,
+        faltas: document.getElementById(`faltas-${id_aluno}`).value
+      };
+
+      const res = await fetch('/api/notas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      alert(data.message || 'Salvo com sucesso!');
+    }
+
+    window.addEventListener('load', carregarSelects);
+  </script>
+</body>
 </html>
