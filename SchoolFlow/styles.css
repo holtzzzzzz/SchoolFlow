@@ -218,7 +218,11 @@ nav.sidebar {
     max-width: 95vw;
   }
 }
-
+.inputtabela{
+  padding: 1%;
+  max-width:50px ;
+  width: 100%;
+}
 table{
   border-collapse: collapse;
   width: 100%;
