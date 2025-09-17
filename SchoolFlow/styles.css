@@ -79,7 +79,7 @@ nav.sidebar {
 .main-content {
   margin-left: 220px;
   padding: 40px 32px;
-  max-width: 900px;
+  max-width: 1200px;
   margin-right: auto;
 }
 
@@ -218,27 +218,135 @@ nav.sidebar {
     max-width: 95vw;
   }
 }
-.inputtabela{
-  padding: 1%;
-  max-width:50px ;
-  width: 100%;
-}
-table{
+table {
   border-collapse: collapse;
   width: 100%;
-  margin-top: 10px;
+  margin-top: 16px;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
-td, th {
-  border: 1px solid #000000;
+
+th {
+  background: linear-gradient(90deg, #7747ed, #a385ee);
+  color: #fff;
   text-align: center;
-  padding: 8px;
+  padding: 12px 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
 }
+
+td {
+  text-align: center;
+  padding: 10px 8px;
+  font-size: 0.9rem;
+  color: #333;
+  border-bottom: 1px solid #e0e0e0;
+}
+
 tr:nth-child(even) {
-  background-color: #ffffff;
+  background-color: #f9f9f9;
 }
 tr:nth-child(odd) {
-  background-color: #dfdfdf;
+  background-color: #ffffff;
 }
+
+tr:hover {
+  background: #f1f0ff;
+  transition: 0.2s;
+}
+
+/* ===== INPUTS DA TABELA ===== */
+.inputtabela {
+  width: 70px;
+  max-width: 90%;
+  padding: 6px 8px;
+  font-size: 0.9rem;
+  text-align: center;
+  border: 1.5px solid #ccc;
+  border-radius: 6px;
+  outline: none;
+  transition: 0.25s;
+  background: #fdfdfd;
+}
+
+.inputtabela:focus {
+  border-color: #7747ed;
+  box-shadow: 0 0 0 2px rgba(119,71,237,0.25);
+}
+#boletim-container {
+  margin-top: 20px;
+  background: #fff;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  overflow-x: auto;   /* Permite scroll horizontal no desktop */
+  box-sizing: border-box;
+  width: 120vw;
+  max-width: 120%;
+}
+
+/* Para evitar que a tabela estoure o container */
+#boletim-container table {
+  min-width: 800px; /* largura mínima */
+}
+/* ===== BOTÃO SALVAR NA TABELA ===== */
+td button {
+  padding: 6px 10px;
+  background: linear-gradient(90deg, #7747ed, #a385ee);
+  border: none;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+td button:hover {
+  background: linear-gradient(90deg, #5f32d4, #8a6ee4);
+  transform: scale(1.05);
+}
+
+/* ===== RESPONSIVIDADE ===== */
+@media (max-width: 700px) {
+  table, thead, tbody, th, td, tr {
+    display: block;
+  }
+
+  thead {
+    display: none; /* Esconde o cabeçalho no mobile */
+  }
+
+  tr {
+    margin-bottom: 14px;
+    background: #fff;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+
+  td {
+    border: none;
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    font-size: 0.9rem;
+  }
+
+  td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #555;
+  }
+
+  .inputtabela {
+    width: 100%;
+    max-width: 100px;
+  }
+}
+
 @media (max-width: 900px) {
   .main-content {
     padding: 32px 8px;
