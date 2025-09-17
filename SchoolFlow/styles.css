@@ -275,22 +275,79 @@ tr:hover {
   border-color: #7747ed;
   box-shadow: 0 0 0 2px rgba(119,71,237,0.25);
 }
+/* ===== CONTAINER DA TABELA ===== */
 #boletim-container {
   margin-top: 20px;
   background: #fff;
   padding: 20px;
   border-radius: 14px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  overflow-x: auto;   /* Permite scroll horizontal no desktop */
+  overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
-  width: 120vw;
-  max-width: 120%;
 }
 
-/* Para evitar que a tabela estoure o container */
-#boletim-container table {
-  min-width: 800px; /* largura mínima */
+/* ===== TABELA ===== */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 700px; /* garante legibilidade em desktop */
+  margin-top: 16px;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
+
+th {
+  background: linear-gradient(90deg, #7747ed, #a385ee);
+  color: #fff;
+  text-align: center;
+  padding: 12px 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+td {
+  text-align: center;
+  padding: 10px 8px;
+  font-size: 0.9rem;
+  color: #333;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+tr:hover {
+  background: #f1f0ff;
+  transition: 0.2s;
+}
+
+/* ===== INPUTS DA TABELA ===== */
+.inputtabela {
+  width: 70px;
+  max-width: 100%;
+  padding: 6px 8px;
+  font-size: 0.9rem;
+  text-align: center;
+  border: 1.5px solid #ccc;
+  border-radius: 6px;
+  outline: none;
+  transition: 0.25s;
+  background: #fdfdfd;
+}
+
+.inputtabela:focus {
+  border-color: #7747ed;
+  box-shadow: 0 0 0 2px rgba(119,71,237,0.25);
+}
+
 /* ===== BOTÃO SALVAR NA TABELA ===== */
 td button {
   padding: 6px 10px;
@@ -310,7 +367,7 @@ td button:hover {
 }
 
 /* ===== RESPONSIVIDADE ===== */
-@media (max-width: 700px) {
+@media (max-width: 768px) {
   table, thead, tbody, th, td, tr {
     display: block;
   }
@@ -339,13 +396,20 @@ td button:hover {
     content: attr(data-label);
     font-weight: 600;
     color: #555;
+    margin-right: 8px;
   }
 
   .inputtabela {
     width: 100%;
-    max-width: 100px;
+    max-width: 120px;
+  }
+
+  td button {
+    width: 100%;
+    margin-top: 6px;
   }
 }
+
 
 @media (max-width: 900px) {
   .main-content {
