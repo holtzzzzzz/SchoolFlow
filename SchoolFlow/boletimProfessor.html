@@ -30,11 +30,13 @@
 
       <button id="carregarBtn" class="login-button">Carregar Alunos</button>
 
-      <div id="boletim-container" style="margin-top:20px;"></div>
+      
     </div>
+    <div id="boletim-container" style="margin-top:20px; display: none;"></div>
   </div>
 
   <script>
+    const boletim = document.getElementById('boletim-container')
     const turmaSelect = document.getElementById('turmaSelect');
     const disciplinaSelect = document.getElementById('disciplinaSelect');
     const boletimContainer = document.getElementById('boletim-container');
@@ -50,7 +52,9 @@
         turmaSelect.appendChild(opt);
       });
     }
+    
 
+    
     async function carregarDisciplinas() {
       const res = await fetch('/api/disciplinas');
       const disciplinas = await res.json();
@@ -64,60 +68,63 @@
     }
 
     async function carregarAlunos() {
-    const id_turma = turmaSelect.value;
-    if (!id_turma) {
-      alert('Selecione a turma!');
-      return;
-    }
+  const id_turma = turmaSelect.value;
+  if (!id_turma) {
+    alert('Selecione a turma!');
+    return;
+  }
 
-    const res = await fetch(`/api/professor/alunos?id_turma=${id_turma}`);
-    const data = await res.json();
+  const res = await fetch(`/api/professor/alunos?id_turma=${id_turma}`);
+  const data = await res.json();
 
-    if (!data.alunos || data.alunos.length === 0) {
-      boletimContainer.innerHTML = '<p>Nenhum aluno encontrado.</p>';
-      return;
-    }
+  if (!data.alunos || data.alunos.length === 0) {
+    boletimContainer.innerHTML = '<p>Nenhum aluno encontrado.</p>';
+    boletimContainer.style.display = 'block'; // garante que apareça a mensagem
+    return;
+  }
 
-    const id_disciplina = data.id_disciplina;
-    const alunos = data.alunos;
+  const id_disciplina = data.id_disciplina;
+  const alunos = data.alunos;
 
-    let tabela = `
-      <table border="1" cellpadding="4" cellspacing="0">
-        <thead>
-          <tr>
-            <th>Aluno</th>
-            <th>I1</th>
-            <th>I2</th>
-            <th>EPA</th>
-            <th>N2</th>
-            <th>N3</th>
-            <th>Rec</th>
-            <th>Faltas</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-
-    alunos.forEach(a => {
-      tabela += `
+  let tabela = `
+    <table border="1" cellpadding="4" cellspacing="0">
+      <thead>
         <tr>
-          <td>${a.nome}</td>
-          <td><input class="inputtabela" type="number" id="i1-${a.id_aluno}" value="${a.i1 ?? ''}"></td>
-          <td><input class="inputtabela" type="number" id="i2-${a.id_aluno}" value="${a.i2 ?? ''}"></td>
-          <td><input class="inputtabela" type="number" id="epa-${a.id_aluno}" value="${a.epa ?? ''}"></td>
-          <td><input class="inputtabela" type="number" id="n2-${a.id_aluno}" value="${a.n2 ?? ''}"></td>
-          <td><input class="inputtabela" type="number" id="n3-${a.id_aluno}" value="${a.n3 ?? ''}"></td>
-          <td><input class="inputtabela" type="number" id="rec-${a.id_aluno}" value="${a.rec ?? ''}"></td>
-          <td><input class="inputtabela" type="number" id="faltas-${a.id_aluno}" value="${a.faltas ?? ''}"></td>
-          <td><button onclick="salvarNota(${a.id_aluno}, ${id_disciplina})">Salvar</button></td>
+          <th>Aluno</th>
+          <th>I1</th>
+          <th>I2</th>
+          <th>EPA</th>
+          <th>N2</th>
+          <th>N3</th>
+          <th>Rec</th>
+          <th>Faltas</th>
+          <th>Ações</th>
         </tr>
-      `;
-    });
+      </thead>
+      <tbody>
+  `;
 
-    tabela += `</tbody></table>`;
-    boletimContainer.innerHTML = tabela;
+  alunos.forEach(a => {
+    tabela += `
+      <tr>
+        <td>${a.nome}</td>
+        <td><input class="inputtabela" type="number" id="i1-${a.id_aluno}" value="${a.i1 ?? ''}"></td>
+        <td><input class="inputtabela" type="number" id="i2-${a.id_aluno}" value="${a.i2 ?? ''}"></td>
+        <td><input class="inputtabela" type="number" id="epa-${a.id_aluno}" value="${a.epa ?? ''}"></td>
+        <td><input class="inputtabela" type="number" id="n2-${a.id_aluno}" value="${a.n2 ?? ''}"></td>
+        <td><input class="inputtabela" type="number" id="n3-${a.id_aluno}" value="${a.n3 ?? ''}"></td>
+        <td><input class="inputtabela" type="number" id="rec-${a.id_aluno}" value="${a.rec ?? ''}"></td>
+        <td><input class="inputtabela" type="number" id="faltas-${a.id_aluno}" value="${a.faltas ?? ''}"></td>
+        <td><button onclick="salvarNota(${a.id_aluno}, ${id_disciplina})">Salvar</button></td>
+      </tr>
+    `;
+  });
+
+  tabela += `</tbody></table>`;
+  boletimContainer.innerHTML = tabela;
+  boletimContainer.style.display = 'block'; // 🔥 torna visível somente após carregar
 }
+
 
 
     async function salvarNota(id_aluno, id_disciplina) {
