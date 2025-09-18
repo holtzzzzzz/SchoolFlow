@@ -368,12 +368,19 @@ td button:hover {
 
 /* ===== RESPONSIVIDADE ===== */
 @media (max-width: 768px) {
-  table, thead, tbody, th, td, tr {
+  #boletim-container{
+    height: 100%;
+  }
+  thead, tbody, th, td, tr {
     display: block;
   }
-
+  table{
+    display: block;
+    min-width: 100px;
+    max-width: 90vw;
+  }
   thead {
-    display: none; /* Esconde o cabeçalho no mobile */
+    display: none; /* esconde o cabeçalho */
   }
 
   tr {
@@ -393,7 +400,7 @@ td button:hover {
   }
 
   td::before {
-    content: attr(data-label);
+    content: attr(data-label); 
     font-weight: 600;
     color: #555;
     margin-right: 8px;
@@ -406,9 +413,10 @@ td button:hover {
 
   td button {
     width: 100%;
-    margin-top: 6px;
+
   }
 }
+
 
 
 @media (max-width: 900px) {
