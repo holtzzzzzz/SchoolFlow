@@ -81,7 +81,7 @@
 
             nomeSpan.textContent = data.nome || '---';
             turmaSpan.textContent = data.turma || '---';
-            matriculaSpan.textContent = data.matricula || '---';
+            matriculaSpan.textContent = data.id_aluno || '---';
 
             tbody.innerHTML = '';
 
@@ -95,17 +95,17 @@
                 rec_ = '-';
               }
               row.innerHTML = `
-                <td>${item.materia}</td>
-                <td>${item.i1 ?? '-'}</td>
-                <td>${item.i2 ?? '-'}</td>
-                <td>${item.epa ?? '-'}</td>
-                <td>${n1.toFixed(2)}</td>
-                <td>${item.n2 ?? '-'}</td>
-                <td>${item.n3 ?? '-'}</td>
-                <td>${mp.toFixed(2)}</td>
-                <td>${typeof rec_ === 'number' ? rec_.toFixed(2) : rec_}</td>
-                <td>${mt.toFixed(2)}</td>
-                <td>${item.faltas ?? '-'}</td>
+                <td data-label="Matéria" style="font-weight: bold", font-size:18>${item.materia}</td>
+                <td data-label="I1">${item.i1 ?? '-'}</td>
+                <td data-label="I2">${item.i2 ?? '-'}</td>
+                <td data-label="EPA">${item.epa ?? '-'}</td>
+                <td data-label="N1">${n1.toFixed(2)}</td>
+                <td data-label="N2">${item.n2 ?? '-'}</td>
+                <td data-label="N3">${item.n3 ?? '-'}</td>
+                <td data-label="MP">${mp.toFixed(2)}</td>
+                <td data-label="REC">${typeof rec_ === 'number' ? rec_.toFixed(2) : rec_}</td>
+                <td data-label="MT">${mt.toFixed(2)}</td>
+                <td data-label="Faltas">${item.faltas ?? '-'}</td>
               `;
               tbody.appendChild(row);
             });
