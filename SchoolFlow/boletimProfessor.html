@@ -87,38 +87,39 @@
   const alunos = data.alunos;
 
   let tabela = `
-    <table border="1" cellpadding="4" cellspacing="0">
-      <thead>
-        <tr>
-          <th>Aluno</th>
-          <th>I1</th>
-          <th>I2</th>
-          <th>EPA</th>
-          <th>N2</th>
-          <th>N3</th>
-          <th>Rec</th>
-          <th>Faltas</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody>
-  `;
-
-  alunos.forEach(a => {
-    tabela += `
+  <table border="1" cellpadding="4" cellspacing="0">
+    <thead>
       <tr>
-        <td>${a.nome}</td>
-        <td><input class="inputtabela" type="number" id="i1-${a.id_aluno}" value="${a.i1 ?? ''}"></td>
-        <td><input class="inputtabela" type="number" id="i2-${a.id_aluno}" value="${a.i2 ?? ''}"></td>
-        <td><input class="inputtabela" type="number" id="epa-${a.id_aluno}" value="${a.epa ?? ''}"></td>
-        <td><input class="inputtabela" type="number" id="n2-${a.id_aluno}" value="${a.n2 ?? ''}"></td>
-        <td><input class="inputtabela" type="number" id="n3-${a.id_aluno}" value="${a.n3 ?? ''}"></td>
-        <td><input class="inputtabela" type="number" id="rec-${a.id_aluno}" value="${a.rec ?? ''}"></td>
-        <td><input class="inputtabela" type="number" id="faltas-${a.id_aluno}" value="${a.faltas ?? ''}"></td>
-        <td><button onclick="salvarNota(${a.id_aluno}, ${id_disciplina})">Salvar</button></td>
+        <th>Aluno</th>
+        <th>I1</th>
+        <th>I2</th>
+        <th>EPA</th>
+        <th>N2</th>
+        <th>N3</th>
+        <th>Rec</th>
+        <th>Faltas</th>
+        <th>Ações</th>
       </tr>
-    `;
-  });
+    </thead>
+    <tbody>
+`;
+
+alunos.forEach(a => {
+  tabela += `
+    <tr>
+      <td data-label="Aluno">${a.nome}</td>
+      <td data-label="I1"><input class="inputtabela" type="number" id="i1-${a.id_aluno}" value="${a.i1 ?? ''}"></td>
+      <td data-label="I2"><input class="inputtabela" type="number" id="i2-${a.id_aluno}" value="${a.i2 ?? ''}"></td>
+      <td data-label="EPA"><input class="inputtabela" type="number" id="epa-${a.id_aluno}" value="${a.epa ?? ''}"></td>
+      <td data-label="N2"><input class="inputtabela" type="number" id="n2-${a.id_aluno}" value="${a.n2 ?? ''}"></td>
+      <td data-label="N3"><input class="inputtabela" type="number" id="n3-${a.id_aluno}" value="${a.n3 ?? ''}"></td>
+      <td data-label="Rec"><input class="inputtabela" type="number" id="rec-${a.id_aluno}" value="${a.rec ?? ''}"></td>
+      <td data-label="Faltas"><input class="inputtabela" type="number" id="faltas-${a.id_aluno}" value="${a.faltas ?? ''}"></td>
+      <td data-label="Ações"><button onclick="salvarNota(${a.id_aluno}, ${id_disciplina})">Salvar</button></td>
+    </tr>
+  `;
+});
+
 
   tabela += `</tbody></table>`;
   boletimContainer.innerHTML = tabela;
