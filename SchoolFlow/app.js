@@ -194,6 +194,7 @@ app.get('/api/boletim', async (req, res) => {
       [aluno.rows[0].id_turma]
     );
 
+
     const notas = await pool.query(
       `SELECT d.nome AS materia, n.i1, n.i2, n.epa, n.n2, n.n3, n.rec, n.faltas
        FROM Notas n
