@@ -51,7 +51,7 @@ CREATE TABLE Alunos (
 CREATE TABLE Notas (
     id SERIAL PRIMARY KEY,
     id_aluno INTEGER NOT NULL REFERENCES Alunos(id_aluno) ON DELETE CASCADE,
-    id_disciplina INTEGER NOT NULL REFERENCES Disciplinas(id_disciplina) ON DELETE CASCADE,
+    id_turma_disciplina INTEGER NOT NULL REFERENCES Turmas_Disciplinas(id) ON DELETE CASCADE,
     i1 NUMERIC(5,2),
     i2 NUMERIC(5,2),
     epa NUMERIC(5,2),
@@ -61,6 +61,7 @@ CREATE TABLE Notas (
     faltas INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 
 -- Tabela: Responsaveis
 CREATE TABLE Responsaveis (
