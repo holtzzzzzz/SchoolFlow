@@ -12,7 +12,13 @@ CREATE TABLE Disciplinas (
     nome VARCHAR(100) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
+CREATE TABLE Turmas_Disciplinas (
+    id SERIAL PRIMARY KEY,
+    id_turma INTEGER NOT NULL REFERENCES Turmas(id_turma) ON DELETE CASCADE,
+    id_disciplina INTEGER NOT NULL REFERENCES Disciplinas(id_disciplina) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (id_turma, id_disciplina) -- evita duplicar a mesma disciplina na turma
+);
 -- Tabela: Professores
 CREATE TABLE Professores (
     id_professor SERIAL PRIMARY KEY,
