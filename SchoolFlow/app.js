@@ -12,7 +12,7 @@ const pool = new Pool({
   user: 'postgres',
   host: 'localhost',
   database: 'Alunos',
-  password: '123456',
+  password: '1903',
   port: 5432,
 });
 
@@ -215,10 +215,47 @@ app.get('/api/boletim', async (req, res) => {
     res.status(500).json({ message: 'Erro ao buscar boletim.' });
   }
 });
+/* =================== Criar Turmas =================== */
+// Criar nova turma com disciplinas
+app.post('/api/turmas', async (req, res) => {
+  const { ano, serie, disciplinas } = req.body;
+
+  if (!ano || !serie || !Array.isArray(disciplinas) || disciplinas.length === 0) {
+    return res.status(400).json({ message: 'Ano, série e pelo menos uma disciplina são obrigatórios.' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Criar turma
+    const turmaRes = await client.query(
+      `INSERT INTO Turmas (ano, serie) VALUES ($1, $2) RETURNING id_turma`,
+      [ano, serie]
+    );
+    const id_turma = turmaRes.rows[0].id_turma;
+
+    // Vincular disciplinas
+    for (const id_disciplina of disciplinas) {
+      await client.query(
+        `INSERT INTO Turmas_Disciplinas (id_turma, id_disciplina) VALUES ($1, $2)`,
+        [id_turma, id_disciplina]
+      );
+    }
+
+    await client.query('COMMIT');
+    res.json({ message: 'Turma criada com sucesso!', id_turma });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error("Erro ao criar turma:", err);
+    res.status(500).json({ message: 'Erro ao criar turma.' });
+  } finally {
+    client.release();
+  }
+});
 
 /* =================== ROTAS EXTRAS =================== */
-// Buscar alunos de uma turma e disciplina (para o professor lançar notas)
-// Buscar alunos de uma turma (disciplina do professor é automática)
+
 app.get('/api/professor/alunos', async (req, res) => {
   if (req.session.funcao !== 'professor') {
     return res.status(403).json({ message: 'Apenas professores podem acessar.' });
