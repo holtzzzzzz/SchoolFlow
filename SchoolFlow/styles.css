@@ -10,6 +10,85 @@ body {
   background: #CBE0E9;
   min-height: 100vh;
 }
+.main-content {
+  margin-left: 220px;
+  padding: 40px 32px;
+  max-width: 700px;
+}
+
+h1 {
+  font-size: 1.8rem;
+  color: #333;
+  margin-bottom: 24px;
+}
+
+.form-turma {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background-color: #f9f9f9;
+  padding: 24px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #333;
+}
+
+input, select {
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  background: #fff;
+  transition: border-color 0.3s;
+}
+
+input:focus, select:focus {
+  border-color: #7747ed;
+  outline: none;
+}
+
+.btn-submit {
+  padding: 12px 0;
+  background: linear-gradient(90deg, #7747ed 60%, #a385ee 100%);
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.btn-submit:hover {
+  background: linear-gradient(90deg, #5f32d4 60%, #8a6ee4 100%);
+}
+
+.mensagem {
+  margin-top: 12px;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+}
+
+/* ===== Responsividade ===== */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    padding: 24px 16px;
+  }
+  .form-turma {
+    padding: 16px;
+  }
+}
 
 nav.sidebar {
   position: fixed;
