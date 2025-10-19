@@ -45,7 +45,22 @@ async function userByEmail(email) {
   }
   return null;
 }
-
+// Função para calcular média e desvio padrão
+function calcularEstatisticas(notas) {
+    if (!notas || notas.length === 0) {
+        return { media: 0, desvioPadrao: 0 };
+    }
+    const n = notas.length;
+    // Converte todas as notas para número
+    const notasNumericas = notas.map(Number);
+    // Calcula a média
+    const media = notasNumericas.reduce((a, b) => a + b, 0) / n;
+    // Calcula a variância da amostra (n-1 no denominador)
+    const variancia = notasNumericas.reduce((a, b) => a + Math.pow(b - media, 2), 0) / (n > 1 ? n - 1 : 1);
+    // Calcula o desvio padrão
+    const desvioPadrao = Math.sqrt(variancia);
+    return { media: parseFloat(media.toFixed(2)), desvioPadrao: parseFloat(desvioPadrao.toFixed(2)) };
+}
 /* =================== PÁGINA INICIAL =================== */
 app.get('/', (req, res) => {
   if (!req.session.userId) {
@@ -100,6 +115,7 @@ app.get('/register', (req, res) => {
 
 app.post('/register', async (req, res) => {
   const { email, password, nome, funcao, id_turma, codigo, id_disciplina, id_turmas } = req.body;
+
   try {
     const funcoesValidas = ['aluno', 'professor', 'coordenacao', 'responsavel'];
     if (!funcoesValidas.includes(funcao)) {
@@ -109,9 +125,13 @@ app.post('/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     switch (funcao) {
+      // ============================================
+      // ALUNO
+      // ============================================
       case 'aluno': {
         if (!id_turma) return res.status(400).json({ message: 'Turma é obrigatória para alunos.' });
 
+        // Criar aluno
         const alunoRes = await pool.query(
           `INSERT INTO Alunos (nome, email, senha, id_turma)
            VALUES ($1, $2, $3, $4) RETURNING id_aluno`,
@@ -119,17 +139,26 @@ app.post('/register', async (req, res) => {
         );
         const alunoId = alunoRes.rows[0].id_aluno;
 
-        // cria notas em branco
-        const disciplinas = await pool.query('SELECT id_disciplina FROM Disciplinas');
-        for (const d of disciplinas.rows) {
+        // Buscar todas as disciplinas associadas à turma
+        const turmaDisciplinas = await pool.query(
+          'SELECT td.id, td.id_disciplina FROM Turmas_Disciplinas td WHERE td.id_turma = $1',
+          [id_turma]
+        );
+
+        // Criar notas em branco para cada disciplina da turma
+        for (const td of turmaDisciplinas.rows) {
           await pool.query(
-            `INSERT INTO Notas (id_aluno, id_disciplina) VALUES ($1, $2)`,
-            [alunoId, d.id_disciplina]
+            'INSERT INTO Notas (id_aluno, id_turma_disciplina, id_disciplina) VALUES ($1, $2, $3)',
+            [alunoId, td.id, td.id_disciplina]
           );
         }
+
         break;
       }
 
+      // ============================================
+      // PROFESSOR
+      // ============================================
       case 'professor': {
         const profRes = await pool.query(
           `INSERT INTO Professores (nome, email, senha)
@@ -151,16 +180,24 @@ app.post('/register', async (req, res) => {
         break;
       }
 
+      // ============================================
+      // RESPONSÁVEL
+      // ============================================
       case 'responsavel':
         await pool.query(
-          `INSERT INTO Responsaveis (nome, email, senha) VALUES ($1, $2, $3)`,
+          `INSERT INTO Responsaveis (nome, email, senha)
+           VALUES ($1, $2, $3)`,
           [nome, email, hashedPassword]
         );
         break;
 
+      // ============================================
+      // COORDENAÇÃO
+      // ============================================
       case 'coordenacao':
         await pool.query(
-          `INSERT INTO Coordenacao (nome, email, senha, codigo) VALUES ($1, $2, $3, $4)`,
+          `INSERT INTO Coordenacao (nome, email, senha, codigo)
+           VALUES ($1, $2, $3, $4)`,
           [nome, email, hashedPassword, codigo || null]
         );
         break;
@@ -168,13 +205,14 @@ app.post('/register', async (req, res) => {
 
     res.status(200).json({ message: 'Usuário registrado com sucesso!' });
   } catch (err) {
-    console.error("Erro no registro:", err);
+    console.error('❌ Erro no registro:', err);
     if (err.code === '23505') {
       return res.status(400).json({ message: 'Este email já está cadastrado.' });
     }
     res.status(500).json({ message: 'Erro ao registrar usuário.' });
   }
 });
+
 
 /* =================== BOLETIM DO ALUNO =================== */
 app.get('/api/boletim', async (req, res) => {
@@ -355,6 +393,45 @@ app.post('/api/notas', async (req, res) => {
     console.error('Erro ao atualizar notas:', err);
     res.status(500).json({ message: 'Erro ao atualizar notas.' });
   }
+});
+
+/* =================== ROTAS PARA GRÁFICOS =================== */
+
+// Rota para o gráfico de dispersão (Notas vs Faltas)
+app.get('/api/graficos/notas-turma', async (req, res) => {
+    const { id_turma, id_disciplina, avaliacao } = req.query;
+
+    if (!id_turma || !id_disciplina || !avaliacao) {
+        return res.status(400).json({ message: 'Turma, disciplina e tipo de avaliação são obrigatórios.' });
+    }
+    
+    // Whitelist para evitar SQL Injection
+    const colunasPermitidas = ['i1', 'i2', 'epa', 'n2', 'n3', 'rec'];
+    if (!colunasPermitidas.includes(avaliacao)) {
+        return res.status(400).json({ message: 'Tipo de avaliação inválida.'});
+    }
+
+    try {
+        // A coluna é inserida de forma segura após a validação
+        const query = `
+            SELECT
+                a.nome,
+                n.${avaliacao} AS nota
+            FROM Notas n
+            JOIN Alunos a ON n.id_aluno = a.id_aluno
+            WHERE a.id_turma = $1 AND n.id_disciplina = $2 AND n.${avaliacao} IS NOT NULL
+            ORDER BY a.nome`;
+            
+        const result = await pool.query(query, [id_turma, id_disciplina]);
+
+        const labels = result.rows.map(row => row.nome);
+        const data = result.rows.map(row => parseFloat(row.nota));
+
+        res.json({ labels, data });
+    } catch (err) {
+        console.error('Erro ao buscar dados para o gráfico:', err);
+        res.status(500).json({ message: 'Erro no servidor.' });
+    }
 });
 
 app.get('/logout', (req, res) => {
