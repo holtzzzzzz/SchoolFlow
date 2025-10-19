@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notas dos Alunos por Avaliação</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .filters {
+            display: flex;
+            gap: 20px;
+            justify-content: flex-start;
+            margin-bottom: 30px;
+            padding: 24px;
+            border-radius: 10px;
+            flex-wrap: wrap;
+        }
+
+        .chart-container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            width: 800px;
+            height: auto;
+        }
+
+        .chart-container h2 {
+            font-size: 1.4rem;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .form-row{
+            max-width: 70%;
+        }
+        @media (max-width: 700px) {
+            .filters {
+                flex-direction: column;
+            }
+
+            .form-row {
+                min-width: 100%;
+            }
+            .filters{
+                margin-bottom: 30%;
+                margin-top: 10%;
+                flex-wrap: nowrap;
+            }
+            
+        }
+    </style>
+</head>
+<body>
+
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <img src="imgs/menu.png" alt="Menu">
+      <h2>Professor</h2>
+    </div>
+    <div class="nav-links">
+      <a href="indexProfessor.html"><img src="imgs/home.png" alt="Home">Início</a>
+      <a href="desempenho.html"><img src="imgs/turma.png" alt="Class">Desempenho da Turma</a>
+      <a href="#"><img src="imgs/faltas.png" alt="Faltas">Faltas</a>
+      <a href="#"><img src="imgs/calendar.png" alt="Calendar">Calendário</a>
+      <a href="boletimProfessor.html"><img src="imgs/grades.png" alt="Grades">Notas</a>
+    </div>
+  </nav>
+
+    <div class="main-content">
+
+        <div class="filters" style="max-width: 100%; background-color:transparent">
+            <div class="form-row">
+                <label for="turma-select">Turma:</label>
+                <select id="turma-select">
+                    <option value="">Selecione uma turma</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <label for="disciplina-select">Disciplina:</label>
+                <select id="disciplina-select">
+                    <option value="">Selecione uma disciplina</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <label for="avaliacao-select">Avaliação:</label>
+                <select id="avaliacao-select">
+                    <option value="">Selecione uma avaliação</option>
+                    <option value="i1">I1</option>
+                    <option value="i2">I2</option>
+                    <option value="epa">EPA</option>
+                    <option value="n2">N2</option>
+                    <option value="n3">N3</option>
+                    <option value="rec">Recuperação</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="chart-container" style="width: 100%; height: 100%; margin-bottom: 0;">
+            <h2>Gráfico de Dispersão</h2>
+            <canvas id="graficoNotas"></canvas>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const turmaSelect = document.getElementById('turma-select');
+            const disciplinaSelect = document.getElementById('disciplina-select');
+            const avaliacaoSelect = document.getElementById('avaliacao-select');
+
+            let notasChart;
+
+            // Popula os filtros com dados da API
+            async function popularFiltros() {
+                try {
+                    const [turmasRes, disciplinasRes] = await Promise.all([
+                        fetch('/api/turmas'),
+                        fetch('/api/disciplinas')
+                    ]);
+                    const turmas = await turmasRes.json();
+                    const disciplinas = await disciplinasRes.json();
+
+                    turmas.forEach(turma => {
+                        const option = new Option(`${turma.ano}º ${turma.serie}`, turma.id_turma);
+                        turmaSelect.add(option);
+                    });
+
+                    disciplinas.forEach(disciplina => {
+                        const option = new Option(disciplina.nome, disciplina.id_disciplina);
+                        disciplinaSelect.add(option);
+                    });
+
+                } catch (error) {
+                    console.error("Erro ao popular filtros:", error);
+                }
+            }
+
+            // Inicializa o gráfico
+            function inicializarGrafico() {
+                const ctx = document.getElementById('graficoNotas').getContext('2d');
+                notasChart = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'Notas dos Alunos',
+                            data: [],
+                            backgroundColor: 'rgba(119, 71, 237, 0.6)',
+                            borderColor: 'rgba(119, 71, 237, 1)',
+                            pointRadius: 6,
+                            pointHoverRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        aspectRatio: 2,
+                        scales: {
+                            x: {
+                                type: 'linear',
+                                position: 'bottom',
+                                title: { 
+                                    display: true, 
+                                    text: 'Ordem dos Alunos (Alfabética)',
+                                    font: { size: 14, weight: 'bold' }
+                                },
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            },
+                            y: {
+                                title: { 
+                                    display: true, 
+                                    text: 'Nota',
+                                    font: { size: 14, weight: 'bold' }
+                                },
+                                min: 0,
+                                max: 10,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const point = context.raw;
+                                        return `${point.nome}: ${point.y}`;
+                                    }
+                                }
+                            },
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Atualiza o gráfico com base nos filtros selecionados
+            async function atualizarGrafico() {
+                const id_turma = turmaSelect.value;
+                const id_disciplina = disciplinaSelect.value;
+                const avaliacao = avaliacaoSelect.value;
+
+                if (id_turma && id_disciplina && avaliacao) {
+                    try {
+                        const res = await fetch(`/api/graficos/notas-turma?id_turma=${id_turma}&id_disciplina=${id_disciplina}&avaliacao=${avaliacao}`);
+                        const data = await res.json();
+                        
+                        // Combina nomes e notas, depois ordena alfabeticamente
+                        const alunosOrdenados = data.labels.map((nome, index) => ({
+                            nome: nome,
+                            nota: data.data[index]
+                        })).sort((a, b) => a.nome.localeCompare(b.nome));
+                        
+                        // Transforma os dados ordenados em pontos de dispersão
+                        const pontos = alunosOrdenados.map((aluno, index) => ({
+                            x: index + 1,
+                            y: aluno.nota,
+                            nome: aluno.nome
+                        }));
+                        
+                        notasChart.data.datasets[0].data = pontos;
+                        notasChart.update();
+                    } catch (error) {
+                        console.error('Erro ao buscar dados de notas da turma:', error);
+                    }
+                } else {
+                    notasChart.data.datasets[0].data = [];
+                    notasChart.update();
+                }
+            }
+            
+            // Adiciona os listeners
+            turmaSelect.addEventListener('change', atualizarGrafico);
+            disciplinaSelect.addEventListener('change', atualizarGrafico);
+            avaliacaoSelect.addEventListener('change', atualizarGrafico);
+
+            // Inicia o processo
+            popularFiltros();
+            inicializarGrafico();
+        });
+    </script>
+</body>
+</html>
