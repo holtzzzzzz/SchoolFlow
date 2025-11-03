@@ -1,3 +1,6 @@
+-- =========================
+-- TURMAS
+-- =========================
 CREATE TABLE Turmas (
     id_turma SERIAL PRIMARY KEY,
     ano INTEGER NOT NULL,
@@ -60,13 +63,14 @@ CREATE TABLE Alunos (
 );
 
 -- =========================
--- NOTAS
+-- NOTAS (com trimestre)
 -- =========================
 CREATE TABLE Notas (
     id SERIAL PRIMARY KEY,
     id_aluno INTEGER NOT NULL REFERENCES Alunos(id_aluno) ON DELETE CASCADE,
     id_turma_disciplina INTEGER NOT NULL REFERENCES Turmas_Disciplinas(id) ON DELETE CASCADE,
     id_disciplina INTEGER NOT NULL REFERENCES Disciplinas(id_disciplina) ON DELETE CASCADE,
+    trimestre INTEGER NOT NULL DEFAULT 1,
     i1 NUMERIC(5,2),
     i2 NUMERIC(5,2),
     epa NUMERIC(5,2),
@@ -74,7 +78,8 @@ CREATE TABLE Notas (
     n3 NUMERIC(5,2),
     rec NUMERIC(5,2),
     faltas INTEGER DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT check_trimestre CHECK (trimestre IN (1, 2, 3))
 );
 
 -- =========================
@@ -109,6 +114,13 @@ CREATE TABLE Coordenacao (
     codigo VARCHAR(50),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- =========================
+-- ÍNDICES PARA PERFORMANCE
+-- =========================
+CREATE INDEX idx_notas_aluno ON Notas(id_aluno);
+CREATE INDEX idx_notas_disciplina ON Notas(id_disciplina);
+CREATE INDEX idx_notas_trimestre ON Notas(trimestre);
 
 -- =========================
 -- 🔹 INSERIR DADOS INICIAIS
