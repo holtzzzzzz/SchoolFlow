@@ -45,6 +45,7 @@ async function userByEmail(email) {
   }
   return null;
 }
+
 // Função para calcular média e desvio padrão
 function calcularEstatisticas(notas) {
     if (!notas || notas.length === 0) {
@@ -61,6 +62,7 @@ function calcularEstatisticas(notas) {
     const desvioPadrao = Math.sqrt(variancia);
     return { media: parseFloat(media.toFixed(2)), desvioPadrao: parseFloat(desvioPadrao.toFixed(2)) };
 }
+
 /* =================== PÁGINA INICIAL =================== */
 app.get('/', (req, res) => {
   if (!req.session.userId) {
@@ -145,12 +147,14 @@ app.post('/register', async (req, res) => {
           [id_turma]
         );
 
-        // Criar notas em branco para cada disciplina da turma
+        // Criar notas em branco para cada disciplina da turma e para cada trimestre (1, 2, 3)
         for (const td of turmaDisciplinas.rows) {
-          await pool.query(
-            'INSERT INTO Notas (id_aluno, id_turma_disciplina, id_disciplina) VALUES ($1, $2, $3)',
-            [alunoId, td.id, td.id_disciplina]
-          );
+          for (let trimestre = 1; trimestre <= 3; trimestre++) {
+            await pool.query(
+              'INSERT INTO Notas (id_aluno, id_turma_disciplina, id_disciplina, trimestre) VALUES ($1, $2, $3, $4)',
+              [alunoId, td.id, td.id_disciplina, trimestre]
+            );
+          }
         }
 
         break;
@@ -214,12 +218,16 @@ app.post('/register', async (req, res) => {
 });
 
 
-/* =================== BOLETIM DO ALUNO =================== */
+/* =================== BOLETIM DO ALUNO (COM FILTRO DE TRIMESTRE) =================== */
 app.get('/api/boletim', async (req, res) => {
   if (req.session.funcao !== 'aluno') {
     return res.status(403).json({ message: 'Apenas alunos podem ver o boletim.' });
   }
+  
   const alunoId = req.session.userId;
+  const { trimestre } = req.query; // Recebe o trimestre da query string
+  const trimestreFiltro = trimestre ? parseInt(trimestre) : 1; // Default: 1º trimestre
+
   try {
     const aluno = await pool.query(
       `SELECT nome, id_aluno, id_turma FROM Alunos WHERE id_aluno = $1`,
@@ -232,20 +240,20 @@ app.get('/api/boletim', async (req, res) => {
       [aluno.rows[0].id_turma]
     );
 
-
     const notas = await pool.query(
-      `SELECT d.nome AS materia, n.i1, n.i2, n.epa, n.n2, n.n3, n.rec, n.faltas
+      `SELECT d.nome AS materia, n.i1, n.i2, n.epa, n.n2, n.n3, n.rec, n.faltas, n.trimestre
        FROM Notas n
        JOIN Disciplinas d ON n.id_disciplina = d.id_disciplina
-       WHERE n.id_aluno = $1
+       WHERE n.id_aluno = $1 AND n.trimestre = $2
        ORDER BY d.nome`,
-      [alunoId]
+      [alunoId, trimestreFiltro]
     );
 
     res.json({
       nome: aluno.rows[0].nome,
       turma: turma.rows[0] ? `${turma.rows[0].ano}º ${turma.rows[0].serie}` : '',
       id_aluno: aluno.rows[0].id_aluno,
+      trimestre: trimestreFiltro,
       notas: notas.rows
     });
   } catch (err) {
@@ -253,8 +261,8 @@ app.get('/api/boletim', async (req, res) => {
     res.status(500).json({ message: 'Erro ao buscar boletim.' });
   }
 });
+
 /* =================== Criar Turmas =================== */
-// Criar nova turma com disciplinas
 app.post('/api/turmas', async (req, res) => {
   const { ano, serie, disciplinas } = req.body;
 
@@ -292,15 +300,16 @@ app.post('/api/turmas', async (req, res) => {
   }
 });
 
-/* =================== ROTAS EXTRAS =================== */
-
+/* =================== PROFESSOR - BUSCAR ALUNOS (COM FILTRO DE TRIMESTRE) =================== */
 app.get('/api/professor/alunos', async (req, res) => {
   if (req.session.funcao !== 'professor') {
     return res.status(403).json({ message: 'Apenas professores podem acessar.' });
   }
 
-  const { id_turma } = req.query;
+  const { id_turma, trimestre } = req.query;
   if (!id_turma) return res.status(400).json({ message: 'Turma obrigatória.' });
+  
+  const trimestreFiltro = trimestre ? parseInt(trimestre) : 1; // Default: 1º trimestre
 
   try {
     // Pegar a disciplina do professor
@@ -318,26 +327,27 @@ app.get('/api/professor/alunos', async (req, res) => {
 
     const id_disciplina = disciplinaRes.rows[0].id_disciplina;
 
-    // Buscar alunos e notas
+    // Buscar alunos e notas do trimestre específico
     const alunos = await pool.query(
-      `SELECT a.id_aluno, a.nome, n.i1, n.i2, n.epa, n.n2, n.n3, n.rec, n.faltas
+      `SELECT a.id_aluno, a.nome, n.i1, n.i2, n.epa, n.n2, n.n3, n.rec, n.faltas, n.trimestre
        FROM Alunos a
        LEFT JOIN Notas n 
          ON a.id_aluno = n.id_aluno 
         AND n.id_disciplina = $1
+        AND n.trimestre = $3
        WHERE a.id_turma = $2
        ORDER BY a.nome`,
-      [id_disciplina, id_turma]
+      [id_disciplina, id_turma, trimestreFiltro]
     );
 
-    res.json({ id_disciplina, alunos: alunos.rows });
+    res.json({ id_disciplina, trimestre: trimestreFiltro, alunos: alunos.rows });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Erro ao buscar alunos.' });
   }
 });
 
-
+/* =================== LISTAR TURMAS =================== */
 app.get('/api/turmas', async (req, res) => {
   try {
     const result = await pool.query('SELECT id_turma, ano, serie FROM Turmas ORDER BY ano, serie');
@@ -348,6 +358,7 @@ app.get('/api/turmas', async (req, res) => {
   }
 });
 
+/* =================== LISTAR DISCIPLINAS =================== */
 app.get('/api/disciplinas', async (req, res) => {
   try {
     const result = await pool.query('SELECT id_disciplina, nome FROM Disciplinas ORDER BY nome');
@@ -357,24 +368,27 @@ app.get('/api/disciplinas', async (req, res) => {
     res.status(500).json({ message: 'Erro ao buscar disciplinas' });
   }
 });
-// Atualizar notas de um aluno (apenas professor)
+
+/* =================== ATUALIZAR NOTAS (COM TRIMESTRE) =================== */
 app.post('/api/notas', async (req, res) => {
   if (req.session.funcao !== 'professor') {
     return res.status(403).json({ message: 'Apenas professores podem lançar notas.' });
   }
 
-  const { id_aluno, id_disciplina, i1, i2, epa, n2, n3, rec, faltas } = req.body;
+  const { id_aluno, id_disciplina, i1, i2, epa, n2, n3, rec, faltas, trimestre } = req.body;
 
   if (!id_aluno || !id_disciplina) {
     return res.status(400).json({ message: 'Aluno e disciplina são obrigatórios.' });
   }
 
+  const trimestreAtualizar = trimestre || 1; // Default: 1º trimestre
+
   try {
-    // Atualiza a tabela Notas
+    // Atualiza a tabela Notas para o trimestre específico
     await pool.query(
       `UPDATE Notas
        SET i1 = $1, i2 = $2, epa = $3, n2 = $4, n3 = $5, rec = $6, faltas = $7
-       WHERE id_aluno = $8 AND id_disciplina = $9`,
+       WHERE id_aluno = $8 AND id_disciplina = $9 AND trimestre = $10`,
       [
         i1 || null,
         i2 || null,
@@ -384,7 +398,8 @@ app.post('/api/notas', async (req, res) => {
         rec || null,
         faltas || null,
         id_aluno,
-        id_disciplina
+        id_disciplina,
+        trimestreAtualizar
       ]
     );
 
@@ -395,15 +410,15 @@ app.post('/api/notas', async (req, res) => {
   }
 });
 
-/* =================== ROTAS PARA GRÁFICOS =================== */
-
-// Rota para o gráfico de dispersão (Notas vs Faltas)
+/* =================== ROTAS PARA GRÁFICOS (COM FILTRO DE TRIMESTRE) =================== */
 app.get('/api/graficos/notas-turma', async (req, res) => {
-    const { id_turma, id_disciplina, avaliacao } = req.query;
+    const { id_turma, id_disciplina, avaliacao, trimestre } = req.query;
 
     if (!id_turma || !id_disciplina || !avaliacao) {
         return res.status(400).json({ message: 'Turma, disciplina e tipo de avaliação são obrigatórios.' });
     }
+    
+    const trimestreFiltro = trimestre ? parseInt(trimestre) : 1; // Default: 1º trimestre
     
     // Whitelist para evitar SQL Injection
     const colunasPermitidas = ['i1', 'i2', 'epa', 'n2', 'n3', 'rec'];
@@ -419,21 +434,22 @@ app.get('/api/graficos/notas-turma', async (req, res) => {
                 n.${avaliacao} AS nota
             FROM Notas n
             JOIN Alunos a ON n.id_aluno = a.id_aluno
-            WHERE a.id_turma = $1 AND n.id_disciplina = $2 AND n.${avaliacao} IS NOT NULL
+            WHERE a.id_turma = $1 AND n.id_disciplina = $2 AND n.trimestre = $3 AND n.${avaliacao} IS NOT NULL
             ORDER BY a.nome`;
             
-        const result = await pool.query(query, [id_turma, id_disciplina]);
+        const result = await pool.query(query, [id_turma, id_disciplina, trimestreFiltro]);
 
         const labels = result.rows.map(row => row.nome);
         const data = result.rows.map(row => parseFloat(row.nota));
 
-        res.json({ labels, data });
+        res.json({ labels, data, trimestre: trimestreFiltro });
     } catch (err) {
         console.error('Erro ao buscar dados para o gráfico:', err);
         res.status(500).json({ message: 'Erro no servidor.' });
     }
 });
 
+/* =================== LOGOUT =================== */
 app.get('/logout', (req, res) => {
   req.session.destroy();
   res.redirect('/login');
