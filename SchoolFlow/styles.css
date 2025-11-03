@@ -177,7 +177,67 @@ nav.sidebar {
   width: 40vw;
   justify-content: center;
 }
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
 
+/* Hide default HTML checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
 .login-container {
   background: #fff;
   border-radius: 18px;
@@ -446,7 +506,7 @@ td button:hover {
 }
 
 /* ===== RESPONSIVIDADE ===== */
-@media (max-width: 768px) {
+@media (max-width: 968px) {
   #boletim-container{
     height: 100%;
   }
@@ -498,13 +558,13 @@ td button:hover {
 
 
 
-@media (max-width: 900px) {
+@media (max-width: 968px) {
   .main-content {
     padding: 32px 8px;
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 968px) {
   nav.sidebar {
     position: fixed;
     top: 0;
@@ -571,7 +631,7 @@ td button:hover {
   }
 }
 
-@media (max-width: 500px) {
+@media (max-width: 968px) {
   .main-content {
     margin-top: 80px;
     padding: 16px 2vw;
@@ -610,3 +670,124 @@ td button:hover {
     font-size: 1rem;
   }
 }
+  @media (max-width: 968px) {
+    /* Ajusta o main-content para empilhar verticalmente */
+    .main-content[style*="flex-direction: row"] {
+      flex-direction: column !important;
+      gap: 15px !important;
+    }
+
+    /* Ajusta as divs dentro do main-content */
+    .main-content > div:first-child,
+    .main-content > div:last-child {
+      width: 100% !important;
+      height: auto !important;
+      min-height: 150px;
+      padding: 20px;
+    }
+
+    .main-content > div:first-child h2 {
+      font-size: 16px;
+      margin: 8px 0;
+    }
+
+    .main-content > div:last-child {
+      padding: 15px;
+    }
+
+    .main-content > div:last-child p {
+      font-size: 14px;
+      margin: 5px 0;
+    }
+
+    /* Ajusta a tabela para mobile */
+    .main-content table {
+      border: 0;
+      font-size: 14px;
+    }
+
+    .main-content table thead {
+      display: none;
+    }
+
+    .main-content table tr {
+      display: block;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background-color: #fff;
+      padding: 10px;
+    }
+
+    .main-content table td {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 5px;
+      border: none;
+      border-bottom: 1px solid #eee;
+      text-align: right;
+    }
+
+    .main-content table td:last-child {
+      border-bottom: none;
+    }
+
+    .main-content table td::before {
+      content: attr(data-label);
+      font-weight: bold;
+      text-align: left;
+      padding-right: 10px;
+    }
+
+    .main-content table td[data-label="Matéria"] {
+      font-size: 16px;
+      background-color: #f8f8f8;
+      margin: -10px -5px 5px -5px;
+      padding: 10px;
+      border-radius: 8px 8px 0 0;
+    }
+
+    /* Ajusta inputs e botões */
+    #media_desejada {
+      width: 100%;
+      max-width: 150px;
+      font-size: 16px;
+    }
+
+    #calcular-btn {
+      width: 100%;
+      max-width: 150px;
+      padding: 10px 16px;
+      font-size: 14px;
+    }
+
+    /* Ajusta o switch */
+    .switch {
+      transform: scale(1.2);
+    }
+  }
+
+  /* Para telas muito pequenas */
+  @media (max-width: 968px) {
+    .main-content {
+      padding: 20px 15px !important;
+      margin-left: 0 !important;
+    }
+
+    .main-content > div:first-child h2 {
+      font-size: 14px;
+    }
+
+    .main-content table {
+      font-size: 12px;
+    }
+
+    .main-content table td {
+      padding: 6px 3px;
+      font-size: 12px;
+    }
+
+    .main-content table td[data-label="Matéria"] {
+      font-size: 14px;
+    }
+  }
