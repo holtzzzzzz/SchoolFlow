@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notas dos Alunos por Avaliação</title>
     <link rel="stylesheet" href="styles.css" />
-    <script src="js/chart.js"></script>
-    <style>
+    <script src="js/chart.js"></script> <style>
         .filters {
             display: flex;
             gap: 20px;
@@ -35,6 +34,25 @@
         .form-row{
             max-width: 70%;
         }
+        
+        /* NOVO: Estilo para o seletor de análise */
+        .analysis-selector {
+            width: 100%;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+        .analysis-selector label {
+            margin-left: 5px;
+            margin-right: 15px;
+        }
+        .analysis-selector strong {
+            font-size: 1.1rem;
+            color: #333;
+            margin-right: 10px;
+        }
+
+
         @media (max-width: 700px) {
             .filters {
                 flex-direction: column;
@@ -56,22 +74,31 @@
 
   <nav class="sidebar">
     <div class="sidebar-header">
-      <img src="imgs/menu.png" alt="Menu">
-      <h2>Professor</h2>
-    </div>
-    <div class="nav-links">
-      <a href="indexProfessor.html"><img src="imgs/home.png" alt="Home">Início</a>
-      <a href="desempenho.html"><img src="imgs/turma.png" alt="Class">Desempenho da Turma</a>
-      <a href="#"><img src="imgs/faltas.png" alt="Faltas">Faltas</a>
-      <a href="#"><img src="imgs/calendar.png" alt="Calendar">Calendário</a>
-      <a href="boletimProfessor.html"><img src="imgs/grades.png" alt="Grades">Notas</a>
-    </div>
+      <img src="imgs/menu.png" alt="Menu">
+      <h2>Professor</h2>
+    </div>
+    <div class="nav-links">
+      <a href="indexProfessor.html"><img src="imgs/home.png" alt="Home">Início</a>
+      <a href="desempenho.html"><img src="imgs/turma.png" alt="Class">Desempenho da Turma</a>
+      <a href="#"><img src="imgs/faltas.png" alt="Faltas">Faltas</a>
+      <a href="#"><img src="imgs/calendar.png" alt="Calendar">Calendário</a>
+      <a href="boletimProfessor.html"><img src="imgs/grades.png" alt="Grades">Notas</a>
+    </div>
   </nav>
 
     <div class="main-content">
 
         <div class="filters" style="max-width: 100%; background-color:transparent">
-            <div class="form-row">
+            
+            <div class="analysis-selector">
+                <strong>Analisar por:</strong>
+                <input type="radio" id="analise-alunos" name="tipo-analise" value="alunos" checked>
+                <label for="analise-alunos">Alunos (dentro da Turma)</label>
+                <input type="radio" id="analise-turmas" name="tipo-analise" value="turmas">
+                <label for="analise-turmas">Turmas (Comparativo de Médias)</label>
+            </div>
+
+            <div class="form-row" id="turma-filter-container">
                 <label for="turma-select">Turma:</label>
                 <select id="turma-select">
                     <option value="">Selecione uma turma</option>
@@ -95,23 +122,36 @@
                     <option value="rec">Recuperação</option>
                 </select>
             </div>
+            <div class="form-row">
+                <label for="chart-type-select">Tipo de Gráfico:</label>
+                <select id="chart-type-select">
+                    </select>
+            </div>
+
         </div>
 
         <div class="chart-container" style="width: 100%; height: 100%; margin-bottom: 0;">
-            <h2>Gráfico de Dispersão</h2>
+            <h2 id="chart-title">Gráfico de Desempenho</h2>
             <canvas id="graficoNotas"></canvas>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Seletores de Filtros
             const turmaSelect = document.getElementById('turma-select');
             const disciplinaSelect = document.getElementById('disciplina-select');
             const avaliacaoSelect = document.getElementById('avaliacao-select');
+            const chartTypeSelect = document.getElementById('chart-type-select');
+            const analysisRadios = document.querySelectorAll('input[name="tipo-analise"]');
+            const turmaFilterContainer = document.getElementById('turma-filter-container');
+            const chartTitle = document.getElementById('chart-title');
 
+            // Variáveis do Gráfico
+            const ctx = document.getElementById('graficoNotas').getContext('2d');
             let notasChart;
 
-            // Popula os filtros com dados da API
+            // Popula os filtros iniciais (Turmas e Disciplinas)
             async function popularFiltros() {
                 try {
                     const [turmasRes, disciplinasRes] = await Promise.all([
@@ -136,111 +176,220 @@
                 }
             }
 
-            // Inicializa o gráfico
-            function inicializarGrafico() {
-                const ctx = document.getElementById('graficoNotas').getContext('2d');
+            // Gerencia a UI dos filtros com base no modo de análise
+            function gerenciarFiltrosUI() {
+                const analisePor = document.querySelector('input[name="tipo-analise"]:checked').value;
+                
+                if (analisePor === 'alunos') {
+                    turmaFilterContainer.style.display = 'block';
+                    chartTypeSelect.innerHTML = `
+                        <option value="scatter">Dispersão</option>
+                        <option value="bar">Barras</option>
+                        <option value="line">Linha</option>
+                    `;
+                    chartTitle.textContent = "Gráfico de Dispersão por Aluno";
+                } else { // 'turmas'
+                    turmaFilterContainer.style.display = 'none';
+                    chartTypeSelect.innerHTML = `
+                        <option value="bar">Barras (Médias)</option>
+                        <option value="line">Linha (Médias)</option>
+                    `;
+                    chartTitle.textContent = "Gráfico Comparativo de Médias por Turma";
+                }
+                atualizarGrafico(); // Atualiza o gráfico ao mudar o modo
+            }
+
+            // Função principal para buscar dados e desenhar o gráfico
+            async function atualizarGrafico() {
+                // Destroi o gráfico anterior se ele existir
+                if (notasChart) {
+                    notasChart.destroy();
+                }
+
+                // Pega os valores dos filtros
+                const id_disciplina = disciplinaSelect.value;
+                const avaliacao = avaliacaoSelect.value;
+                const chartType = chartTypeSelect.value;
+                const analisePor = document.querySelector('input[name="tipo-analise"]:checked').value;
+
+                let config;
+                let url;
+
+                try {
+                    if (analisePor === 'alunos') {
+                        const id_turma = turmaSelect.value;
+                        // Só busca dados se todos os filtros estiverem preenchidos
+                        if (!id_turma || !id_disciplina || !avaliacao) {
+                            criarGraficoVazio();
+                            return;
+                        }
+                        
+                        url = `/api/graficos/notas-turma?id_turma=${id_turma}&id_disciplina=${id_disciplina}&avaliacao=${avaliacao}`;
+                        const res = await fetch(url);
+                        const data = await res.json(); // Espera { labels: [nomes], data: [notas] }
+                        
+                        // Processa dados para análise de alunos
+                        const alunosOrdenados = data.labels.map((nome, index) => ({
+                            nome: nome,
+                            nota: data.data[index]
+                        })).sort((a, b) => a.nome.localeCompare(b.nome));
+
+                        config = construirConfigAlunos(chartType, alunosOrdenados);
+                        chartTitle.textContent = `Desempenho da Turma (${avaliacao.toUpperCase()})`;
+
+                    } else { // analisePor === 'turmas'
+                        // Só busca dados se os filtros necessários estiverem preenchidos
+                        if (!id_disciplina || !avaliacao) {
+                            criarGraficoVazio();
+                            return;
+                        }
+
+                        // ATENÇÃO: Isso requer um NOVO endpoint na sua API
+                        url = `/api/graficos/notas-comparativo-turmas?id_disciplina=${id_disciplina}&avaliacao=${avaliacao}`;
+                        const res = await fetch(url);
+                        const data = await res.json(); // Espera { labels: [turmas], data: [medias] }
+                        
+                        config = construirConfigTurmas(chartType, data);
+                        chartTitle.textContent = `Comparativo de Turmas (${avaliacao.toUpperCase()})`;
+                    }
+                    
+                    notasChart = new Chart(ctx, config);
+
+                } catch (error) {
+                    console.error('Erro ao buscar ou renderizar dados do gráfico:', error);
+                    criarGraficoVazio("Erro ao carregar dados");
+                }
+            }
+
+            // Cria um gráfico vazio ou com mensagem de erro
+            function criarGraficoVazio(message = "Selecione os filtros para ver os dados") {
+                if (notasChart) notasChart.destroy();
                 notasChart = new Chart(ctx, {
-                    type: 'scatter',
-                    data: {
-                        datasets: [{
-                            label: 'Notas dos Alunos',
-                            data: [],
-                            backgroundColor: 'rgba(119, 71, 237, 0.6)',
-                            borderColor: 'rgba(119, 71, 237, 1)',
-                            pointRadius: 6,
-                            pointHoverRadius: 8
-                        }]
-                    },
+                    type: 'bar',
+                    data: { labels: [], datasets: [] },
                     options: {
                         responsive: true,
                         maintainAspectRatio: true,
-                        aspectRatio: 2,
-                        scales: {
-                            x: {
-                                type: 'linear',
-                                position: 'bottom',
-                                title: { 
-                                    display: true, 
-                                    text: 'Ordem dos Alunos (Alfabética)',
-                                    font: { size: 14, weight: 'bold' }
-                                },
-                                ticks: {
-                                    stepSize: 1
-                                }
-                            },
-                            y: {
-                                title: { 
-                                    display: true, 
-                                    text: 'Nota',
-                                    font: { size: 14, weight: 'bold' }
-                                },
-                                min: 0,
-                                max: 10,
-                                ticks: {
-                                    stepSize: 1
-                                }
-                            }
-                        },
                         plugins: {
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        const point = context.raw;
-                                        return `${point.nome}: ${point.y}`;
-                                    }
-                                }
-                            },
-                            legend: {
-                                display: false
-                            }
+                            title: { display: true, text: message, font: { size: 16 } },
+                            legend: { display: false }
                         }
                     }
                 });
             }
 
-            // Atualiza o gráfico com base nos filtros selecionados
-            async function atualizarGrafico() {
-                const id_turma = turmaSelect.value;
-                const id_disciplina = disciplinaSelect.value;
-                const avaliacao = avaliacaoSelect.value;
-
-                if (id_turma && id_disciplina && avaliacao) {
-                    try {
-                        const res = await fetch(`/api/graficos/notas-turma?id_turma=${id_turma}&id_disciplina=${id_disciplina}&avaliacao=${avaliacao}`);
-                        const data = await res.json();
-                        
-                        // Combina nomes e notas, depois ordena alfabeticamente
-                        const alunosOrdenados = data.labels.map((nome, index) => ({
-                            nome: nome,
-                            nota: data.data[index]
-                        })).sort((a, b) => a.nome.localeCompare(b.nome));
-                        
-                        // Transforma os dados ordenados em pontos de dispersão
-                        const pontos = alunosOrdenados.map((aluno, index) => ({
-                            x: index + 1,
-                            y: aluno.nota,
-                            nome: aluno.nome
-                        }));
-                        
-                        notasChart.data.datasets[0].data = pontos;
-                        notasChart.update();
-                    } catch (error) {
-                        console.error('Erro ao buscar dados de notas da turma:', error);
-                    }
-                } else {
-                    notasChart.data.datasets[0].data = [];
-                    notasChart.update();
+            // Helper para construir a config de gráficos por ALUNO
+            function construirConfigAlunos(type, alunosData) {
+                // Para scatter, os dados são {x, y, nome}
+                if (type === 'scatter') {
+                    const pontos = alunosData.map((aluno, index) => ({
+                        x: index + 1,
+                        y: aluno.nota,
+                        nome: aluno.nome
+                    }));
+                    return {
+                        type: 'scatter',
+                        data: {
+                            datasets: [{
+                                label: 'Notas dos Alunos',
+                                data: pontos,
+                                backgroundColor: 'rgba(119, 71, 237, 0.6)',
+                                borderColor: 'rgba(119, 71, 237, 1)',
+                                pointRadius: 6,
+                                pointHoverRadius: 8
+                            }]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: true, aspectRatio: 2,
+                            scales: {
+                                x: { 
+                                    title: { display: true, text: 'Ordem dos Alunos (Alfabética)', font: { size: 14, weight: 'bold' } },
+                                    ticks: { stepSize: 1 }
+                                },
+                                y: { 
+                                    title: { display: true, text: 'Nota', font: { size: 14, weight: 'bold' } },
+                                    min: 0, max: 10, ticks: { stepSize: 1 }
+                                }
+                            },
+                            plugins: {
+                                tooltip: {
+                                    callbacks: {
+                                        label: (context) => `${context.raw.nome}: ${context.raw.y}`
+                                    }
+                                },
+                                legend: { display: false }
+                            }
+                        }
+                    };
                 }
+
+                // Para bar e line, os dados são [notas] e labels são [nomes]
+                const labels = alunosData.map(a => a.nome);
+                const data = alunosData.map(a => a.nota);
+                
+                return {
+                    type: type, // 'bar' or 'line'
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Nota',
+                            data: data,
+                            backgroundColor: 'rgba(119, 71, 237, 0.6)',
+                            borderColor: 'rgba(119, 71, 237, 1)',
+                            fill: (type === 'line') ? false : true,
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: true, aspectRatio: 2,
+                        scales: {
+                            x: { title: { display: true, text: 'Aluno', font: { size: 14, weight: 'bold' } } },
+                            y: { title: { display: true, text: 'Nota', font: { size: 14, weight: 'bold' } }, min: 0, max: 10 }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                };
+            }
+
+            // Helper para construir a config de gráficos por TURMA
+            function construirConfigTurmas(type, turmasData) {
+                // turmasData = { labels: ['Turma 101'], data: [7.5] }
+                return {
+                    type: type, // 'bar' or 'line'
+                    data: {
+                        labels: turmasData.labels, // Nomes das turmas
+                        datasets: [{
+                            label: 'Média da Turma',
+                            data: turmasData.data, // Médias
+                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            fill: (type === 'line') ? false : true,
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: true, aspectRatio: 2,
+                        scales: {
+                            x: { title: { display: true, text: 'Turma', font: { size: 14, weight: 'bold' } } },
+                            y: { title: { display: true, text: 'Média da Nota', font: { size: 14, weight: 'bold' } }, min: 0, max: 10 }
+                        },
+                        plugins: { 
+                            legend: { display: true, position: 'top' } 
+                        }
+                    }
+                };
             }
             
-            // Adiciona os listeners
+            // Adiciona os listeners para TODOS os filtros
             turmaSelect.addEventListener('change', atualizarGrafico);
             disciplinaSelect.addEventListener('change', atualizarGrafico);
             avaliacaoSelect.addEventListener('change', atualizarGrafico);
+            chartTypeSelect.addEventListener('change', atualizarGrafico);
+            analysisRadios.forEach(radio => radio.addEventListener('change', gerenciarFiltrosUI));
 
             // Inicia o processo
             popularFiltros();
-            inicializarGrafico();
+            gerenciarFiltrosUI(); // Configura a UI inicial e chama atualizarGrafico() pela primeira vez
         });
     </script>
 </body>
