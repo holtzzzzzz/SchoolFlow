@@ -448,7 +448,51 @@ app.get('/api/graficos/notas-turma', async (req, res) => {
         res.status(500).json({ message: 'Erro no servidor.' });
     }
 });
+app.get('/api/graficos/notas-comparativo-turmas', async (req, res) => {
+  const { id_disciplina, avaliacao, trimestre } = req.query;
 
+  if (!id_disciplina || !avaliacao) {
+      return res.status(400).json({ message: 'Disciplina e tipo de avaliação são obrigatórios.' });
+  }
+  
+  // Define o trimestre padrão como 1, igual às suas outras rotas
+  const trimestreFiltro = trimestre ? parseInt(trimestre) : 1; 
+  
+  // Reutiliza sua whitelist de colunas para segurança
+  const colunasPermitidas = ['i1', 'i2', 'epa', 'n2', 'n3', 'rec'];
+  if (!colunasPermitidas.includes(avaliacao)) {
+      return res.status(400).json({ message: 'Tipo de avaliação inválida.'});
+  }
+
+  try {
+      // Query para calcular a MÉDIA da nota por turma
+      const query = `
+          SELECT
+              t.ano,
+              t.serie,
+              AVG(n.${avaliacao}) AS media_nota
+          FROM Notas n
+          JOIN Alunos a ON n.id_aluno = a.id_aluno
+          JOIN Turmas t ON a.id_turma = t.id_turma
+          WHERE n.id_disciplina = $1 
+            AND n.trimestre = $2 
+            AND n.${avaliacao} IS NOT NULL
+          GROUP BY t.id_turma, t.ano, t.serie
+          ORDER BY t.ano, t.serie`;
+          
+      const result = await pool.query(query, [id_disciplina, trimestreFiltro]);
+
+      // Formata os dados para o Chart.js
+      const labels = result.rows.map(row => `${row.ano}º ${row.serie}`);
+      const data = result.rows.map(row => parseFloat(parseFloat(row.media_nota).toFixed(2))); // Arredonda a média
+
+      res.json({ labels, data, trimestre: trimestreFiltro });
+
+  } catch (err) {
+      console.error('Erro ao buscar dados para o gráfico comparativo:', err);
+      res.status(500).json({ message: 'Erro no servidor.' });
+  }
+});
 /* =================== LOGOUT =================== */
 app.get('/logout', (req, res) => {
   req.session.destroy();
