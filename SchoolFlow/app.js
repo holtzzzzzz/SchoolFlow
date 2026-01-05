@@ -357,6 +357,28 @@ app.get('/api/turmas', async (req, res) => {
     res.status(500).json({ message: 'Erro ao buscar turmas' });
   }
 });
+/* =================== LISTAR TURMAS DO PROFESSOR =================== */
+app.get('/api/professor/turmas', async (req, res) => {
+  if (req.session.funcao !== 'professor') {
+    return res.status(403).json({ message: 'Apenas professores podem acessar.' });
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT DISTINCT t.id_turma, t.ano, t.serie
+       FROM Turmas t
+       JOIN Professores_Disciplinas_Turmas pdt ON t.id_turma = pdt.id_turma
+       WHERE pdt.id_professor = $1
+       ORDER BY t.ano, t.serie`,
+      [req.session.userId]
+    );
+    
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar turmas do professor:', err);
+    res.status(500).json({ message: 'Erro ao buscar turmas' });
+  }
+});
 
 /* =================== LISTAR DISCIPLINAS =================== */
 app.get('/api/disciplinas', async (req, res) => {
@@ -449,7 +471,7 @@ app.get('/api/graficos/notas-turma', async (req, res) => {
     }
 });
 app.get('/api/graficos/notas-comparativo-turmas', async (req, res) => {
-  const { id_disciplina, avaliacao, trimestre } = req.query;
+  const { id_disciplina, avaliacao, trimestre, turmas } = req.query;
 
   if (!id_disciplina || !avaliacao) {
       return res.status(400).json({ message: 'Disciplina e tipo de avaliação são obrigatórios.' });
@@ -465,9 +487,30 @@ app.get('/api/graficos/notas-comparativo-turmas', async (req, res) => {
   }
 
   try {
+      // Prepara os parâmetros da query
+      const queryParams = [id_disciplina, trimestreFiltro];
+      
+      // Constrói a cláusula WHERE para filtrar turmas específicas (se fornecidas)
+      let whereTurmas = '';
+      if (turmas) {
+          // Converte a string "3,5,7" em array de números [3, 5, 7]
+          const turmasArray = turmas.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+          
+          if (turmasArray.length > 0) {
+              // Adiciona o filtro de turmas na query
+              whereTurmas = ` AND t.id_turma = ANY($${queryParams.length + 1})`;
+              queryParams.push(turmasArray);
+              
+              console.log('📊 Filtrando turmas específicas:', turmasArray);
+          }
+      } else {
+          console.log('📊 Buscando todas as turmas');
+      }
+
       // Query para calcular a MÉDIA da nota por turma
       const query = `
           SELECT
+              t.id_turma,
               t.ano,
               t.serie,
               AVG(n.${avaliacao}) AS media_nota
@@ -477,19 +520,30 @@ app.get('/api/graficos/notas-comparativo-turmas', async (req, res) => {
           WHERE n.id_disciplina = $1 
             AND n.trimestre = $2 
             AND n.${avaliacao} IS NOT NULL
+            ${whereTurmas}
           GROUP BY t.id_turma, t.ano, t.serie
           ORDER BY t.ano, t.serie`;
           
-      const result = await pool.query(query, [id_disciplina, trimestreFiltro]);
+      console.log('🔍 Query:', query);
+      console.log('🔍 Params:', queryParams);
+      
+      const result = await pool.query(query, queryParams);
+
+      console.log(`✅ Encontradas ${result.rows.length} turmas`);
 
       // Formata os dados para o Chart.js
       const labels = result.rows.map(row => `${row.ano}º ${row.serie}`);
       const data = result.rows.map(row => parseFloat(parseFloat(row.media_nota).toFixed(2))); // Arredonda a média
 
-      res.json({ labels, data, trimestre: trimestreFiltro });
+      res.json({ 
+          labels, 
+          data, 
+          trimestre: trimestreFiltro,
+          turmas_filtradas: turmas ? turmas.split(',').length : 'todas'
+      });
 
   } catch (err) {
-      console.error('Erro ao buscar dados para o gráfico comparativo:', err);
+      console.error('❌ Erro ao buscar dados para o gráfico comparativo:', err);
       res.status(500).json({ message: 'Erro no servidor.' });
   }
 });
