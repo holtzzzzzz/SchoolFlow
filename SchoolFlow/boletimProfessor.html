@@ -16,7 +16,33 @@
          background: #CBE0E9;
          min-height: 100vh;
       }
+      .save-all-button {
+         width: 100%;
+         padding: 14px;
+         background: linear-gradient(90deg, #28a745 60%, #5cb85c 100%);
+         color: #fff;
+         border: none;
+         border-radius: 8px;
+         font-size: 1.1rem;
+         font-weight: 600;
+         cursor: pointer;
+         margin-top: 20px;
+         box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+         transition: all 0.2s;
+      }
 
+      .save-all-button:hover {
+         opacity: 0.9;
+         transform: translateY(-2px);
+         box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
+      }
+
+      .save-all-button:disabled {
+         background: #ccc;
+         cursor: not-allowed;
+         transform: none;
+         box-shadow: none;
+      }
       /* ===== SIDEBAR ===== */
       nav.sidebar {
          position: fixed;
@@ -395,15 +421,20 @@
 
      <div id="boletim-container" style="margin-top: 20px; display: none;height: 100%;"></div>
    </div>
-
-   <script>
+      <button id="salvarTodosBtn" class="save-all-button" style="display: none;">
+        💾 Salvar Notas de Todos os Alunos
+     </button>
+    <script>
       const boletim = document.getElementById('boletim-container')
       const turmaSelect = document.getElementById('turmaSelect');
-    // Note: A variável 'disciplinaSelect' foi removida pois não há <select> no HTML.
       const boletimContainer = document.getElementById('boletim-container');
+      const salvarTodosBtn = document.getElementById('salvarTodosBtn');
+      
+      let alunosCarregados = [];
+      let disciplinaAtual = null;
 
       async function carregarTurmas() {
-         const res = await fetch('/api/turmas');
+         const res = await fetch('/api/professor/turmas');
          const turmas = await res.json();
          turmaSelect.innerHTML = '<option value="">Selecione a Turma</option>';
          turmas.forEach(t => {
@@ -413,15 +444,12 @@
             turmaSelect.appendChild(opt);
          });
       }
-      
-    // Note: A função 'carregarDisciplinas' foi removida pois não é usada neste HTML.
 
       function calcularN1(i1, i2, epa) {
          const ins1 = Number(i1) || 0;
          const ins2 = Number(i2) || 0;
          const epa_ = Number(epa) || 0;
          
-         // Se todos forem 0 ou vazios, retorna '-'
          if (ins1 === 0 && ins2 === 0 && epa_ === 0) return '-';
          
          return ((ins1 + ins2 + epa_) / 3).toFixed(2);
@@ -432,37 +460,57 @@
          const nota2 = Number(n2) || 0;
          const nota3 = Number(n3) || 0;
          
-         // Se todos forem 0 ou vazios, retorna '-'
          if (nota1 === 0 && nota2 === 0 && nota3 === 0) return '-';
          
          return ((nota1 + nota2 + (nota3 * 2)) / 4).toFixed(2);
       }
 
-    // =======================================================
-    // FUNÇÃO ATUALIZADA (carregarAlunos)
-    // =======================================================
+      function calcularMT(mp, rec) {
+         const mpNum = Number(mp);
+         const recNum = Number(rec);
+         
+         // Se MP é '-' ou não é um número válido, retorna '-'
+         if (mp === '-' || isNaN(mpNum)) return '-';
+         
+         // Se MP >= 6, MT = MP (aprovado direto)
+         if (mpNum >= 6) return mpNum.toFixed(2);
+         
+         // Se MP < 6 e não tem recuperação, MT = MP
+         if (isNaN(recNum) || recNum === 0) return mpNum.toFixed(2);
+         
+         // Se tem recuperação e ela é maior que MP
+         if (recNum > mpNum) {
+            // Se recuperação > 6, MT = 6 (teto)
+            if (recNum > 6) return '6.00';
+            // Senão, MT = recuperação
+            return recNum.toFixed(2);
+         }
+         
+         // Se recuperação <= MP, mantém MP
+         return mpNum.toFixed(2);
+      }
+
       async function carregarAlunos() {
          const id_turma = turmaSelect.value;
-      // Pega o valor do trimestre selecionado
-      const id_trimestre = document.getElementById('trimestre-select').value; 
+         const id_trimestre = document.getElementById('trimestre-select').value; 
 
          if (!id_turma) {
             alert('Selecione a turma!');
             return;
          }
 
-      // Adiciona o parâmetro 'trimestre' na requisição fetch
          const res = await fetch(`/api/professor/alunos?id_turma=${id_turma}&trimestre=${id_trimestre}`);
          const data = await res.json();
 
          if (!data.alunos || data.alunos.length === 0) {
             boletimContainer.innerHTML = '<p>Nenhum aluno encontrado.</p>';
             boletimContainer.style.display = 'block'; 
+            salvarTodosBtn.style.display = 'none';
             return;
          }
 
-         const id_disciplina = data.id_disciplina;
-         const alunos = data.alunos;
+         disciplinaAtual = data.id_disciplina;
+         alunosCarregados = data.alunos;
 
          let tabela = `
          <table border="1" cellpadding="4" cellspacing="0">
@@ -478,15 +526,16 @@
                   <th>MP</th>
                   <th>Rec</th>
                   <th>Faltas</th>
-                  <th>Ações</th>
+                  <th>MT</th>
                </tr>
             </thead>
             <tbody>
       `;
 
-      alunos.forEach(a => {
+      alunosCarregados.forEach(a => {
          const n1 = calcularN1(a.i1, a.i2, a.epa);
          const mp = calcularMP(n1, a.n2, a.n3);
+         const mt = calcularMT(mp, a.rec);
          
          tabela += `
             <tr>
@@ -498,105 +547,144 @@
                <td data-label="N2"><input class="inputtabela" type="number" step="0.1" onblur="validarNota(this); atualizarCalculos(${a.id_aluno})" id="n2-${a.id_aluno}" value="${a.n2 ?? ''}"></td>
                <td data-label="N3"><input class="inputtabela" type="number" step="0.1" onblur="validarNota(this); atualizarCalculos(${a.id_aluno})" id="n3-${a.id_aluno}" value="${a.n3 ?? ''}"></td>
                <td data-label="MP" id="mp-display-${a.id_aluno}" style="font-weight: bold; background-color: #f0f0f0;">${mp}</td>
-               <td data-label="Rec"><input class="inputtabela" type="number" step="0.1" onblur="validarNota(this)" id="rec-${a.id_aluno}" value="${a.rec ?? ''}"></td>
+               <td data-label="Rec"><input class="inputtabela" type="number" step="0.1" oninput="atualizarCalculos(${a.id_aluno})" onblur="validarNota(this); atualizarCalculos(${a.id_aluno})" id="rec-${a.id_aluno}" value="${a.rec ?? ''}" disabled></td>
                <td data-label="Faltas"><input class="inputtabela" type="number" step="1" min="0" id="faltas-${a.id_aluno}" value="${a.faltas ?? ''}"></td>
-               <td data-label="Ações"><button onclick="salvarNota(${a.id_aluno}, ${id_disciplina})">Salvar</button></td>
+               <td data-label="MT" id="mt-display-${a.id_aluno}" style="font-weight: bold; background-color: #f0f0f0;">${mt}</td>
             </tr>
          `;
       });
 
-
          tabela += `</tbody></table>`;
          boletimContainer.innerHTML = tabela;
          boletimContainer.style.display = 'block';
+         salvarTodosBtn.style.display = 'block';
       }
 
-      function atualizarCalculos(id_aluno) {
-         const i1 = document.getElementById(`i1-${id_aluno}`).value;
-         const i2 = document.getElementById(`i2-${id_aluno}`).value;
-         const epa = document.getElementById(`epa-${id_aluno}`).value;
-         const n2 = document.getElementById(`n2-${id_aluno}`).value;
-         const n3 = document.getElementById(`n3-${id_aluno}`).value;
-
-         // Calcula N1
-         const n1 = calcularN1(i1, i2, epa);
-         document.getElementById(`n1-display-${id_aluno}`).textContent = n1;
-
-         // Calcula MP
-         const mp = calcularMP(n1, n2, n3);
-         document.getElementById(`mp-display-${id_aluno}`).textContent = mp;
-      }
-
-    // =======================================================
-    // FUNÇÃO ATUALIZADA (salvarNota)
-    // =======================================================
-      async function salvarNota(id_aluno, id_disciplina) {
-      // Pega o valor do trimestre selecionado
-      const id_trimestre = document.getElementById('trimestre-select').value;
-
-         const payload = {
-            id_aluno,
-            id_disciplina,
-            i1: document.getElementById(`i1-${id_aluno}`).value,
-            i2: document.getElementById(`i2-${id_aluno}`).value,
-            epa: document.getElementById(`epa-${id_aluno}`).value,
-            n2: document.getElementById(`n2-${id_aluno}`).value,
-            n3: document.getElementById(`n3-${id_aluno}`).value,
-            rec: document.getElementById(`rec-${id_aluno}`).value,
-            faltas: document.getElementById(`faltas-${id_aluno}`).value,
-        trimestre: id_trimestre // Inclui o trimestre no payload
-         };
-
-         const res = await fetch('/api/notas', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-         });
-
-         const data = await res.json();
-         alert(data.message || 'Salvo com sucesso!');
+   function atualizarCalculos(idAluno) {
+      const i1 = parseFloat(document.getElementById(`i1-${idAluno}`).value);
+      const i2 = parseFloat(document.getElementById(`i2-${idAluno}`).value);
+      const epa = parseFloat(document.getElementById(`epa-${idAluno}`).value);
+      const n2 = parseFloat(document.getElementById(`n2-${idAluno}`).value);
+      const n3 = parseFloat(document.getElementById(`n3-${idAluno}`).value);
+      const rec = parseFloat(document.getElementById(`rec-${idAluno}`).value);
       
+      // Recalcula N1 e MP
+      const n1 = calcularN1(i1, i2, epa);
+      document.getElementById(`n1-display-${idAluno}`).textContent = n1;
+
+      const mp = calcularMP(n1, n2, n3);
+      document.getElementById(`mp-display-${idAluno}`).textContent = mp;
+
+      const mt = calcularMT(mp, rec);
+      document.getElementById(`mt-display-${idAluno}`).textContent = mt;
+      
+      // Verifica se todos os campos necessários estão preenchidos
+      const todosPreenchidos = [i1, i2, epa, n2, n3].every(v => !isNaN(v) && v !== '');
+      
+      const recInput = document.getElementById(`rec-${idAluno}`);
+      const mpNum = parseFloat(mp);
+      
+      // Habilita recuperação APENAS se:
+      // 1. Todos os campos estão preenchidos
+      // 2. MP é um número válido (não é '-')
+      // 3. MP < 6 (aluno em recuperação)
+      if (todosPreenchidos && !isNaN(mpNum) && mpNum < 6) {
+         recInput.disabled = false;
+      } else {
+         recInput.disabled = true;
+         // Limpa o campo de recuperação se não for mais necessário
+         if (mpNum >= 6) {
+            recInput.value = '';
+         }
+      }
+   }
+
+      async function salvarTodasNotas() {
+         const id_trimestre = document.getElementById('trimestre-select').value;
+         
+         if (!disciplinaAtual || alunosCarregados.length === 0) {
+            alert('Nenhum aluno carregado!');
+            return;
+         }
+
+         salvarTodosBtn.disabled = true;
+         salvarTodosBtn.textContent = '⏳ Salvando...';
+
+         let sucessos = 0;
+         let erros = 0;
+
+         for (const aluno of alunosCarregados) {
+            const payload = {
+               id_aluno: aluno.id_aluno,
+               id_disciplina: disciplinaAtual,
+               i1: document.getElementById(`i1-${aluno.id_aluno}`).value,
+               i2: document.getElementById(`i2-${aluno.id_aluno}`).value,
+               epa: document.getElementById(`epa-${aluno.id_aluno}`).value,
+               n2: document.getElementById(`n2-${aluno.id_aluno}`).value,
+               n3: document.getElementById(`n3-${aluno.id_aluno}`).value,
+               rec: document.getElementById(`rec-${aluno.id_aluno}`).value,
+               faltas: document.getElementById(`faltas-${aluno.id_aluno}`).value,
+               trimestre: id_trimestre
+            };
+
+            try {
+               const res = await fetch('/api/notas', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload)
+               });
+
+               if (res.ok) {
+                  sucessos++;
+               } else {
+                  erros++;
+               }
+            } catch (err) {
+               erros++;
+               console.error('Erro ao salvar nota do aluno:', aluno.nome, err);
+            }
+         }
+
+         salvarTodosBtn.disabled = false;
+         salvarTodosBtn.textContent = '💾 Salvar Notas de Todos os Alunos';
+
+         if (erros === 0) {
+            alert(`✅ Todas as ${sucessos} notas foram salvas com sucesso!`);
+         } else {
+            alert(`⚠️ ${sucessos} notas salvas com sucesso.\n${erros} notas falharam.`);
+         }
       }
 
       function validarNota(input) {
-         // Se o campo estiver vazio, não faz nada
          if (input.value.trim() === '') {
            return;
          }
 
          let valor = parseFloat(input.value);
 
-         // Se não for um número válido (ex: "abc"), limpa o campo
          if (isNaN(valor)) {
             input.value = '';
             return;
          }
 
-         // Regra 1: Se a nota for negativa, vira 0
          if (valor < 0) {
             valor = 0;
          } 
-         // Regra 2: Se for maior que 10 E menor/igual a 100 (ex: 97), divide por 10
          else if (valor > 10 && valor <= 100) {
             valor = valor / 10;
          } 
-         // Regra 3: Se for maior que 10 (ex: 11 ou 101), vira 10
          else if (valor > 10) {
             valor = 10;
          }
 
-         // Arredonda para 2 casas decimais para evitar problemas com 0.3000000004
          valor = Math.round(valor * 100) / 100;
-
-         // Atualiza o valor no campo
          input.value = valor;
       }
 
       document.getElementById('carregarBtn').addEventListener('click', carregarAlunos);
+      salvarTodosBtn.addEventListener('click', salvarTodasNotas);
 
-      // Inicializar selects
       carregarTurmas();
-    // A chamada 'carregarDisciplinas()' foi removida.
    </script>
 </body>
 </html>
