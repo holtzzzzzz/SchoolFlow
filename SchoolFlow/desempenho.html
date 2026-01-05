@@ -5,17 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notas dos Alunos por Avaliação</title>
     <link rel="stylesheet" href="styles.css" />
-    <script src="js/chart.js"></script> <style>
-        .filters {
-            display: flex;
-            gap: 20px;
+    <!-- Importar Chart.js via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        /* CORREÇÃO: CSS específico para os filtros que sobrescreve o .main-content div genérico */
+        .main-content .filters {
+            background-color: #f8f9fa !important;
+            display: flex !important;
+            flex-direction: row !important;
+            gap: 15px;
             justify-content: flex-start;
             margin-bottom: 30px;
-            padding: 24px;
+            padding: 24px !important;
             border-radius: 10px;
             flex-wrap: wrap;
+            
+            /* Limites para não ultrapassar a tela */
+            max-width: 100% !important;
+            width: auto !important;
+            max-height: 450px;
+            height: auto !important;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border: 1px solid #d0d0d0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            text-align: left !important;
+        }
+        
+        /* Scrollbar personalizada */
+        .filters::-webkit-scrollbar {
+            width: 8px;
+        }
+        .filters::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .filters::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        .filters::-webkit-scrollbar-thumb:hover {
+            background: #555;
         }
 
+        /* Container do gráfico */
         .chart-container {
             background-color: #fff;
             padding: 30px;
@@ -31,60 +64,116 @@
             margin-bottom: 20px;
             text-align: center;
         }
-        .form-row{
-            max-width: 70%;
+        
+        /* Form rows dentro dos filtros */
+        .filters .form-row {
+            min-width: 200px;
+            max-width: 280px;
+            flex: 1 1 200px;
+            background-color: transparent !important;
+            height: auto !important;
+            width: auto !important;
+            padding: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            text-align: left !important;
+            justify-content: flex-start !important;
+        }
+        
+        .filters .form-row label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .filters .form-row select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+            background-color: white;
+        }
+        
+        /* Estilo para select múltiplo */
+        .filters .form-row select[multiple] {
+            min-height: 120px;
         }
         
         /* NOVO: Estilo para o seletor de análise */
-        .analysis-selector {
-            width: 100%;
+        .filters .analysis-selector {
+            width: 100% !important;
             margin-bottom: 15px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 15px;
+            flex-shrink: 0;
+            background-color: transparent !important;
+            height: auto !important;
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: wrap;
+            align-items: center;
+            text-align: left !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            padding-top: 0 !important;
+            justify-content: flex-start !important;
         }
-        .analysis-selector label {
+        
+        .filters .analysis-selector label {
             margin-left: 5px;
             margin-right: 15px;
+            cursor: pointer;
         }
-        .analysis-selector strong {
+        
+        .filters .analysis-selector strong {
             font-size: 1.1rem;
             color: #333;
             margin-right: 10px;
+            display: inline-block;
         }
 
-
+        /* Responsividade */
         @media (max-width: 700px) {
-            .filters {
-                flex-direction: column;
+            .main-content .filters {
+                flex-direction: column !important;
+                max-height: 400px;
+                padding: 16px !important;
             }
 
-            .form-row {
+            .filters .form-row {
                 min-width: 100%;
-            }
-            .filters{
-                margin-bottom: 30%;
-                margin-top: 10%;
-                flex-wrap: nowrap;
+                max-width: 100%;
             }
             
+            .filters .analysis-selector {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+            }
+            
+            .filters .analysis-selector label {
+                margin: 5px 0;
+            }
         }
     </style>
 </head>
 <body>
 
-  <nav class="sidebar">
-    <div class="sidebar-header">
-      <img src="imgs/menu.png" alt="Menu">
-      <h2>Professor</h2>
-    </div>
-    <div class="nav-links">
-      <a href="indexProfessor.html"><img src="imgs/home.png" alt="Home">Início</a>
-      <a href="desempenho.html"><img src="imgs/turma.png" alt="Class">Desempenho da Turma</a>
-      <a href="#"><img src="imgs/faltas.png" alt="Faltas">Faltas</a>
-      <a href="#"><img src="imgs/calendar.png" alt="Calendar">Calendário</a>
-      <a href="boletimProfessor.html"><img src="imgs/grades.png" alt="Grades">Notas</a>
-    </div>
-  </nav>
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <img src="imgs/menu.png" alt="Menu">
+        <h2>Professor</h2>
+      </div>
+      <div class="nav-links">
+        <a href="indexProfessor.html"><img src="imgs/home.png" alt="Home">Início</a>
+        <a href="desempenho.html"><img src="imgs/turma.png" alt="Class">Desempenho da Turma</a>
+        <a href="#"><img src="imgs/faltas.png" alt="Faltas">Faltas</a>
+        <a href="#"><img src="imgs/calendar.png" alt="Calendar">Calendário</a>
+        <a href="boletimProfessor.html"><img src="imgs/grades.png" alt="Grades">Notas</a>
+      </div>
+    </nav>
 
     <div class="main-content">
 
@@ -98,18 +187,22 @@
                 <label for="analise-turmas">Turmas (Comparativo de Médias)</label>
             </div>
 
-            <div class="form-row" id="turma-filter-container">
-                <label for="turma-select">Turma:</label>
-                <select id="turma-select">
+            <!-- Container para seleção de turma única (modo alunos) -->
+            <div class="form-row" id="turma-single-container">
+                <label for="turma-select-single">Turma:</label>
+                <select id="turma-select-single">
                     <option value="">Selecione uma turma</option>
                 </select>
             </div>
-            <div class="form-row">
-                <label for="disciplina-select">Disciplina:</label>
-                <select id="disciplina-select">
-                    <option value="">Selecione uma disciplina</option>
+
+            <!-- Container para seleção múltipla de turmas (modo comparativo) -->
+            <div class="form-row" id="turma-multiple-container" style="display: none;">
+                <label for="turma-select-multiple">Turmas (Ctrl+Click para múltiplas):</label>
+                <select multiple id="turma-select-multiple" style="min-height: 120px;">
+                    <!-- Opções serão carregadas dinamicamente -->
                 </select>
             </div>
+
             <div class="form-row">
                 <label for="avaliacao-select">Avaliação:</label>
                 <select id="avaliacao-select">
@@ -125,7 +218,10 @@
             <div class="form-row">
                 <label for="chart-type-select">Tipo de Gráfico:</label>
                 <select id="chart-type-select">
-                    </select>
+                    <option value="scatter">Dispersão</option>
+                    <option value="bar">Barras</option>
+                    <option value="line">Linha</option>
+                </select>
             </div>
 
         </div>
@@ -138,50 +234,140 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Página carregada - Iniciando aplicação');
+            console.log('📊 Chart.js disponível?', typeof Chart !== 'undefined');
+
             // Seletores de Filtros
-            const turmaSelect = document.getElementById('turma-select');
-            const disciplinaSelect = document.getElementById('disciplina-select');
+            const turmaSelectSingle = document.getElementById('turma-select-single');
+            const turmaSelectMultiple = document.getElementById('turma-select-multiple');
+            const turmaSingleContainer = document.getElementById('turma-single-container');
+            const turmaMultipleContainer = document.getElementById('turma-multiple-container');
             const avaliacaoSelect = document.getElementById('avaliacao-select');
             const chartTypeSelect = document.getElementById('chart-type-select');
             const analysisRadios = document.querySelectorAll('input[name="tipo-analise"]');
-            const turmaFilterContainer = document.getElementById('turma-filter-container');
             const chartTitle = document.getElementById('chart-title');
 
             // Variáveis do Gráfico
             const ctx = document.getElementById('graficoNotas').getContext('2d');
             let notasChart;
+            
+            // Variável para armazenar o ID da disciplina do professor
+            let disciplinaProfessor = null;
 
-            // Popula os filtros iniciais (Turmas e Disciplinas)
+            // Carrega as turmas do professor nos dois selects
+            async function carregarTurmas() {
+                try {
+                    console.log('📚 Buscando turmas...');
+                    const res = await fetch('/api/professor/turmas');
+                    if (!res.ok) {
+                        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                    }
+                    const turmas = await res.json();
+                    console.log('✅ Turmas recebidas:', turmas);
+                    
+                    // Preenche o select single
+                    turmaSelectSingle.innerHTML = '<option value="">Selecione uma turma</option>';
+                    turmas.forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = t.id_turma;
+                        opt.textContent = `${t.ano}º ${t.serie}`;
+                        turmaSelectSingle.appendChild(opt);
+                    });
+
+                    // Preenche o select multiple
+                    turmaSelectMultiple.innerHTML = '';
+                    turmas.forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = t.id_turma;
+                        opt.textContent = `${t.ano}º ${t.serie}`;
+                        turmaSelectMultiple.appendChild(opt);
+                    });
+                } catch (error) {
+                    console.error('❌ Erro ao carregar turmas:', error);
+                }
+            }
+
+            // Carrega a disciplina do professor baseado na turma selecionada (apenas para modo alunos)
+            async function carregarDisciplinaProfessor() {
+                const id_turma = turmaSelectSingle.value;
+                
+                if (!id_turma) {
+                    console.log('⚠️ Nenhuma turma selecionada ainda');
+                    return;
+                }
+                
+                try {
+                    console.log(`📖 Buscando disciplina para turma ${id_turma}...`);
+                    const res = await fetch(`/api/professor/alunos?id_turma=${id_turma}`);
+                    
+                    if (!res.ok) {
+                        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                    }
+                    
+                    const data = await res.json();
+                    disciplinaProfessor = data.id_disciplina;
+                    console.log('✅ Disciplina carregada:', disciplinaProfessor);
+                    
+                    // Atualiza o gráfico após carregar a disciplina
+                    atualizarGrafico();
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao carregar disciplina:', error);
+                }
+            }
+
+            // Carrega a disciplina do professor para modo turmas (usa a primeira turma selecionada)
+            async function carregarDisciplinaProfessorParaTurmas() {
+                const turmasSelecionadas = Array.from(turmaSelectMultiple.selectedOptions);
+                
+                if (turmasSelecionadas.length === 0) {
+                    console.log('⚠️ Nenhuma turma selecionada');
+                    return;
+                }
+                
+                const id_turma = turmasSelecionadas[0].value;
+                
+                try {
+                    console.log(`📖 Buscando disciplina para turma ${id_turma}...`);
+                    const res = await fetch(`/api/professor/alunos?id_turma=${id_turma}`);
+                    
+                    if (!res.ok) {
+                        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                    }
+                    
+                    const data = await res.json();
+                    disciplinaProfessor = data.id_disciplina;
+                    console.log('✅ Disciplina carregada:', disciplinaProfessor);
+                    
+                    // Atualiza o gráfico após carregar a disciplina
+                    atualizarGrafico();
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao carregar disciplina:', error);
+                }
+            }
+
+            // Popula os filtros iniciais
             async function popularFiltros() {
                 try {
-                    const [turmasRes, disciplinasRes] = await Promise.all([
-                        fetch('/api/turmas'),
-                        fetch('/api/disciplinas')
-                    ]);
-                    const turmas = await turmasRes.json();
-                    const disciplinas = await disciplinasRes.json();
-
-                    turmas.forEach(turma => {
-                        const option = new Option(`${turma.ano}º ${turma.serie}`, turma.id_turma);
-                        turmaSelect.add(option);
-                    });
-
-                    disciplinas.forEach(disciplina => {
-                        const option = new Option(disciplina.nome, disciplina.id_disciplina);
-                        disciplinaSelect.add(option);
-                    });
-
+                    console.log('🔄 Populando filtros iniciais...');
+                    await carregarTurmas();
+                    console.log('✅ Filtros iniciais carregados');
                 } catch (error) {
-                    console.error("Erro ao popular filtros:", error);
+                    console.error("❌ Erro ao popular filtros:", error);
                 }
             }
 
             // Gerencia a UI dos filtros com base no modo de análise
-            function gerenciarFiltrosUI() {
+            async function gerenciarFiltrosUI() {
                 const analisePor = document.querySelector('input[name="tipo-analise"]:checked').value;
+                console.log('🔄 Modo de análise:', analisePor);
                 
                 if (analisePor === 'alunos') {
-                    turmaFilterContainer.style.display = 'block';
+                    // Mostra select single, esconde select multiple
+                    turmaSingleContainer.style.display = 'flex';
+                    turmaMultipleContainer.style.display = 'none';
+                    
                     chartTypeSelect.innerHTML = `
                         <option value="scatter">Dispersão</option>
                         <option value="bar">Barras</option>
@@ -189,44 +375,91 @@
                     `;
                     chartTitle.textContent = "Gráfico de Dispersão por Aluno";
                 } else { // 'turmas'
-                    turmaFilterContainer.style.display = 'none';
+                    // Esconde select single, mostra select multiple
+                    turmaSingleContainer.style.display = 'none';
+                    turmaMultipleContainer.style.display = 'flex';
+                    
                     chartTypeSelect.innerHTML = `
                         <option value="bar">Barras (Médias)</option>
                         <option value="line">Linha (Médias)</option>
                     `;
                     chartTitle.textContent = "Gráfico Comparativo de Médias por Turma";
+                    
+                    // NOVO: Carrega a disciplina se ainda não foi carregada
+                    if (!disciplinaProfessor && turmaSelectMultiple.options.length > 0) {
+                        // Usa a primeira turma disponível para carregar a disciplina
+                        const primeiraTurma = turmaSelectMultiple.options[0].value;
+                        try {
+                            const res = await fetch(`/api/professor/alunos?id_turma=${primeiraTurma}`);
+                            if (res.ok) {
+                                const data = await res.json();
+                                disciplinaProfessor = data.id_disciplina;
+                                console.log('✅ Disciplina carregada no modo turmas:', disciplinaProfessor);
+                            }
+                        } catch (error) {
+                            console.error('❌ Erro ao carregar disciplina:', error);
+                        }
+                    }
                 }
                 atualizarGrafico(); // Atualiza o gráfico ao mudar o modo
             }
 
             // Função principal para buscar dados e desenhar o gráfico
             async function atualizarGrafico() {
+                console.log('📊 Atualizando gráfico...');
+                
                 // Destroi o gráfico anterior se ele existir
                 if (notasChart) {
                     notasChart.destroy();
                 }
 
                 // Pega os valores dos filtros
-                const id_disciplina = disciplinaSelect.value;
                 const avaliacao = avaliacaoSelect.value;
                 const chartType = chartTypeSelect.value;
                 const analisePor = document.querySelector('input[name="tipo-analise"]:checked').value;
+
+                console.log('📋 Filtros atuais:', {
+                    analisePor,
+                    avaliacao,
+                    chartType,
+                    disciplina: disciplinaProfessor
+                });
 
                 let config;
                 let url;
 
                 try {
                     if (analisePor === 'alunos') {
-                        const id_turma = turmaSelect.value;
+                        const id_turma = turmaSelectSingle.value;
+                        
                         // Só busca dados se todos os filtros estiverem preenchidos
-                        if (!id_turma || !id_disciplina || !avaliacao) {
+                        if (!id_turma || !disciplinaProfessor || !avaliacao) {
+                            console.log('⚠️ Filtros incompletos:', {
+                                id_turma,
+                                disciplinaProfessor,
+                                avaliacao
+                            });
                             criarGraficoVazio();
                             return;
                         }
                         
-                        url = `/api/graficos/notas-turma?id_turma=${id_turma}&id_disciplina=${id_disciplina}&avaliacao=${avaliacao}`;
+                        url = `/api/graficos/notas-turma?id_turma=${id_turma}&id_disciplina=${disciplinaProfessor}&avaliacao=${avaliacao}`;
+                        console.log('🌐 Buscando:', url);
+                        
                         const res = await fetch(url);
-                        const data = await res.json(); // Espera { labels: [nomes], data: [notas] }
+                        if (!res.ok) {
+                            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                        }
+                        
+                        const data = await res.json();
+                        console.log('✅ Dados recebidos:', data);
+                        
+                        // Verifica se há dados
+                        if (!data.labels || data.labels.length === 0) {
+                            console.log('⚠️ Nenhum aluno encontrado');
+                            criarGraficoVazio("Nenhum aluno encontrado para esta turma/avaliação");
+                            return;
+                        }
                         
                         // Processa dados para análise de alunos
                         const alunosOrdenados = data.labels.map((nome, index) => ({
@@ -234,35 +467,69 @@
                             nota: data.data[index]
                         })).sort((a, b) => a.nome.localeCompare(b.nome));
 
+                        console.log('📊 Alunos ordenados:', alunosOrdenados);
                         config = construirConfigAlunos(chartType, alunosOrdenados);
                         chartTitle.textContent = `Desempenho da Turma (${avaliacao.toUpperCase()})`;
 
                     } else { // analisePor === 'turmas'
+                        // Pega as turmas selecionadas
+                        const turmasSelecionadas = Array.from(turmaSelectMultiple.selectedOptions).map(opt => opt.value);
+                        
                         // Só busca dados se os filtros necessários estiverem preenchidos
-                        if (!id_disciplina || !avaliacao) {
+                        if (!disciplinaProfessor || !avaliacao) {
+                            console.log('⚠️ Filtros incompletos para turmas');
                             criarGraficoVazio();
                             return;
                         }
 
-                        // ATENÇÃO: Isso requer um NOVO endpoint na sua API
-                        url = `/api/graficos/notas-comparativo-turmas?id_disciplina=${id_disciplina}&avaliacao=${avaliacao}`;
+                        // Constrói a URL com turmas selecionadas (se houver)
+                        url = `/api/graficos/notas-comparativo-turmas?id_disciplina=${disciplinaProfessor}&avaliacao=${avaliacao}`;
+                        if (turmasSelecionadas.length > 0) {
+                            url += `&turmas=${turmasSelecionadas.join(',')}`;
+                        }
+                        
+                        console.log('🌐 Buscando:', url);
+                        
                         const res = await fetch(url);
-                        const data = await res.json(); // Espera { labels: [turmas], data: [medias] }
+                        if (!res.ok) {
+                            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                        }
+                        
+                        const data = await res.json();
+                        console.log('✅ Dados recebidos:', data);
+                        
+                        // Verifica se há dados
+                        if (!data.labels || data.labels.length === 0) {
+                            console.log('⚠️ Nenhuma turma encontrada');
+                            criarGraficoVazio("Nenhuma turma encontrada para esta avaliação");
+                            return;
+                        }
                         
                         config = construirConfigTurmas(chartType, data);
-                        chartTitle.textContent = `Comparativo de Turmas (${avaliacao.toUpperCase()})`;
+                        
+                        // Ajusta o título baseado no número de turmas selecionadas
+                        if (turmasSelecionadas.length === 0) {
+                            chartTitle.textContent = `Comparativo de Todas as Turmas (${avaliacao.toUpperCase()})`;
+                        } else if (turmasSelecionadas.length === 1) {
+                            chartTitle.textContent = `Desempenho da Turma (${avaliacao.toUpperCase()})`;
+                        } else {
+                            chartTitle.textContent = `Comparativo de ${turmasSelecionadas.length} Turmas (${avaliacao.toUpperCase()})`;
+                        }
                     }
                     
+                    console.log('🎨 Criando gráfico tipo:', config.type);
                     notasChart = new Chart(ctx, config);
+                    console.log('✅ Gráfico criado com sucesso!');
 
                 } catch (error) {
-                    console.error('Erro ao buscar ou renderizar dados do gráfico:', error);
+                    console.error('❌ Erro ao buscar ou renderizar dados do gráfico:', error);
                     criarGraficoVazio("Erro ao carregar dados");
                 }
             }
 
             // Cria um gráfico vazio ou com mensagem de erro
             function criarGraficoVazio(message = "Selecione os filtros para ver os dados") {
+                console.log('📊 Criando gráfico vazio:', message);
                 if (notasChart) notasChart.destroy();
                 notasChart = new Chart(ctx, {
                     type: 'bar',
@@ -380,16 +647,39 @@
                 };
             }
             
-            // Adiciona os listeners para TODOS os filtros
-            turmaSelect.addEventListener('change', atualizarGrafico);
-            disciplinaSelect.addEventListener('change', atualizarGrafico);
-            avaliacaoSelect.addEventListener('change', atualizarGrafico);
-            chartTypeSelect.addEventListener('change', atualizarGrafico);
-            analysisRadios.forEach(radio => radio.addEventListener('change', gerenciarFiltrosUI));
+            // Event Listeners
+            turmaSelectSingle.addEventListener('change', async () => {
+                console.log('🔄 Turma selecionada (single):', turmaSelectSingle.value);
+                await carregarDisciplinaProfessor();
+            });
+
+            turmaSelectMultiple.addEventListener('change', async () => {
+                const selecionadas = Array.from(turmaSelectMultiple.selectedOptions).map(o => o.value);
+                console.log('🔄 Turmas selecionadas (multiple):', selecionadas);
+                
+                // Sempre atualiza o gráfico quando mudar a seleção
+                atualizarGrafico();
+            });
+            
+            avaliacaoSelect.addEventListener('change', () => {
+                console.log('🔄 Avaliação selecionada:', avaliacaoSelect.value);
+                atualizarGrafico();
+            });
+            
+            chartTypeSelect.addEventListener('change', () => {
+                console.log('🔄 Tipo de gráfico selecionado:', chartTypeSelect.value);
+                atualizarGrafico();
+            });
+            
+            // CORRIGIDO: Event listener único para os radio buttons
+            analysisRadios.forEach(radio => {
+                radio.addEventListener('change', gerenciarFiltrosUI);
+            });
 
             // Inicia o processo
+            console.log('🎬 Iniciando aplicação...');
             popularFiltros();
-            gerenciarFiltrosUI(); // Configura a UI inicial e chama atualizarGrafico() pela primeira vez
+            gerenciarFiltrosUI();
         });
     </script>
 </body>
