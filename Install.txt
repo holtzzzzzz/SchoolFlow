@@ -1,1 +1,1 @@
-npm install express pg bcryptjs express-session body-parser
+npm install express pg bcryptjs express-session body-parser dotenv
